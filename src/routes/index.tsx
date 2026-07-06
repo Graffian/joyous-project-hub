@@ -427,6 +427,20 @@ function CookNote() {
 
         <div className="flex flex-col justify-center">
           <Eyebrow>A note from the kitchen</Eyebrow>
+          <h2 className="mt-4 font-serif text-[2rem] leading-[1] tracking-tight text-ink md:text-[3rem]">
+            Ghar ka khana,
+            <span className="italic font-light text-clay"> delivered warm.</span>
+          </h2>
+          <p className="mt-4 max-w-lg text-[14px] leading-relaxed text-muted-foreground md:text-[15px]">
+            Ten dishes a day, cooked by hand in a home kitchen — not a cloud kitchen, not a
+            restaurant. Order what's on today's board on WhatsApp; we bring it hot.
+          </p>
+          <div className="mt-6 flex items-center gap-4">
+            <Rule />
+            <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">
+              A note from {kitchen.cook.name}
+            </span>
+          </div>
           <p className="measure mt-6 text-[15px] leading-[1.7] text-muted-foreground md:text-[16px]">
             {kitchen.cook.note}
           </p>
