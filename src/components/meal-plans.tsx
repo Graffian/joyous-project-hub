@@ -15,6 +15,7 @@ import {
   CookingPot,
   Soup,
   Wheat,
+  ChevronDown,
 } from "lucide-react";
 import { whatsappUrl } from "@/lib/menu";
 import { kitchen } from "@/lib/kitchen-config";
