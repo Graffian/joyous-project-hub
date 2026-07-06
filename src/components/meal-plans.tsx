@@ -27,6 +27,36 @@ import heroThali from "@/assets/hero-thali.jpg";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 const DAY_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
 
+// Loose keyword → dish image mapping so a signature dish name resolves to a photo.
+const IMAGE_KEYWORDS: Array<[RegExp, string]> = [
+  [/thali|odisha/i, "dalma"],
+  [/dalma/i, "dalma"],
+  [/santula/i, "santula"],
+  [/paneer|kadhi|bhurji/i, "chhena-poda"],
+  [/aloo|baingan|baigan|poori|bhaja/i, "aloo-poori"],
+  [/mushroom|soy|soybean|ghanta|mix ?veg|bhindi/i, "santula"],
+  [/macha|fish/i, "macha-besara"],
+  [/chicken|mutton|mansa/i, "chicken-jhola"],
+  [/pakhala/i, "pakhala"],
+  [/kheer/i, "kheeri"],
+];
+
+function pickImage(featured: string | null, dishes: string[], override: string | null): string {
+  if (override) return override;
+  const hay = `${featured ?? ""} ${dishes.join(" ")}`;
+  for (const [re, key] of IMAGE_KEYWORDS) if (re.test(hay)) return imageForKey(key);
+  return heroThali;
+}
+
+const MEAL_INCLUDES = [
+  { icon: <Soup className="h-5 w-5" strokeWidth={1.5} />, title: "1 Serving Rice", note: "with Lunch" },
+  { icon: <Wheat className="h-5 w-5" strokeWidth={1.5} />, title: "4 Fresh Rotis", note: "with Dinner" },
+  { icon: <CookingPot className="h-5 w-5" strokeWidth={1.5} />, title: "Homestyle Dal", note: "Every meal" },
+  { icon: <Utensils className="h-5 w-5" strokeWidth={1.5} />, title: "2 Seasonal Sabzis", note: "Fresh picks" },
+  { icon: <Salad className="h-5 w-5" strokeWidth={1.5} />, title: "Fresh Salad", note: "Cut daily" },
+  { icon: <Leaf className="h-5 w-5" strokeWidth={1.5} />, title: "Pickle", note: "House-made" },
+];
+
 type Plan = {
   key: "lunch" | "full" | "dinner";
   icon: React.ReactNode;
