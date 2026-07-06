@@ -2,9 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, Clock, MapPin, Plus, Search, Sparkles, X } from "lucide-react";
-import heroThali from "@/assets/hero-thali.jpg";
 import cookPortrait from "@/assets/cook-illustration.jpg";
-import { SiteHeader, WhatsAppIcon } from "@/components/site-header";
+import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { WhatsAppFab } from "@/components/whatsapp-fab";
 import { useReveal } from "@/hooks/use-reveal";
@@ -99,126 +98,6 @@ function MenuTopBar() {
             <span className="font-serif italic text-ink">{it.v}</span>
           </span>
         ))}
-      </div>
-    </section>
-  );
-}
-
-/* ---------- HERO ---------- */
-
-function Hero() {
-  const today = useTodayLabel();
-  return (
-    <section className="relative">
-      <div className="mx-auto grid max-w-6xl gap-12 px-5 pb-20 pt-6 md:grid-cols-[1.05fr_0.95fr] md:gap-16 md:px-8 md:pb-28 md:pt-14">
-        <div className="flex flex-col justify-center">
-          <div
-            className="inline-flex w-fit items-center gap-2 anim-fade-up"
-            style={{ animationDelay: "0.05s" }}
-          >
-            <Eyebrow tone="haldi">Authentic {kitchen.cuisine} Kitchen · {kitchen.brand.location}</Eyebrow>
-          </div>
-
-          <h1
-            className="mt-5 font-serif text-[2.75rem] leading-[0.98] tracking-[-0.02em] text-ink md:text-[4.5rem] anim-fade-up"
-            style={{ animationDelay: "0.15s" }}
-          >
-            Ghar ka khana,
-            <br />
-            <span className="italic font-light text-clay">delivered warm.</span>
-          </h1>
-
-          <div
-            className="mt-6 flex items-center gap-4 anim-fade-up"
-            style={{ animationDelay: "0.25s" }}
-          >
-            <Rule />
-            <span
-              suppressHydrationWarning
-              className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground"
-            >
-              {today} · kitchen is open
-            </span>
-          </div>
-
-          <p
-            className="mt-6 max-w-lg text-[15px] leading-relaxed text-muted-foreground md:text-lg anim-fade-up"
-            style={{ animationDelay: "0.35s" }}
-          >
-            Ten dishes a day, cooked by hand in a home kitchen — not a cloud kitchen, not a
-            restaurant. Order what's on today's board on WhatsApp; we bring it hot.
-          </p>
-
-          <div
-            className="mt-9 flex flex-wrap items-center gap-3 anim-fade-up"
-            style={{ animationDelay: "0.45s" }}
-          >
-            <a
-              href="#menu"
-              className="group inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3.5 text-[11px] font-bold uppercase tracking-[0.22em] text-cream transition-all duration-300 hover:-translate-y-0.5 hover:bg-clay hover:shadow-[0_16px_38px_-14px_rgba(30,20,15,0.55)]"
-            >
-              See today's menu
-              <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </a>
-            <a
-              href={whatsappUrl("Hi! I'd like to place an order from today's menu.")}
-              target="_blank"
-              rel="noreferrer"
-              className="group inline-flex items-center gap-2 rounded-full border border-ink/15 bg-background px-6 py-3.5 text-[11px] font-bold uppercase tracking-[0.22em] text-ink transition-all duration-300 hover:border-ink/40 hover:bg-ink/[0.03]"
-            >
-              <WhatsAppIcon className="h-3.5 w-3.5 transition-transform duration-300 group-hover:scale-110" />
-              Order on WhatsApp
-            </a>
-          </div>
-
-          <dl
-            className="mt-12 grid grid-cols-3 gap-4 border-t border-border/70 pt-6 anim-fade-up sm:gap-6"
-            style={{ animationDelay: "0.6s" }}
-          >
-            {[
-              { k: "Lunch by", v: kitchen.timing.lunchBy },
-              { k: "Dinner by", v: kitchen.timing.dinnerBy },
-              { k: "Zones", v: kitchen.delivery.zones },
-            ].map((s) => (
-              <div key={s.k} className="min-w-0">
-                <dt className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
-                  {s.k}
-                </dt>
-                <dd className="mt-1.5 truncate font-serif text-lg italic text-ink md:text-xl">
-                  {s.v}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-
-        {/* Editorial hero image, arch on top */}
-        <div className="relative anim-fade-in" style={{ animationDelay: "0.25s" }}>
-          <div className="group relative">
-            <div className="overflow-hidden rounded-t-[8rem] rounded-b-2xl border border-ink/5 bg-muted shadow-[0_36px_90px_-40px_rgba(80,40,20,0.4)]">
-              <img
-                src={heroThali}
-                alt={`A homemade ${kitchen.cuisine} thali with dal, rice, sabzi, roti and chutney served on a brass plate`}
-                width={1280}
-                height={1600}
-                className="h-[460px] w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.04] md:h-[640px]"
-              />
-            </div>
-
-            {/* Floating terracotta pill */}
-            <a
-              href={whatsappUrl(`Hi! I'd like today's signature dish — ${kitchen.signature.dish} with ${kitchen.signature.with}.`)}
-              target="_blank"
-              rel="noreferrer"
-              className="absolute -bottom-5 right-4 flex flex-col items-center gap-0.5 rounded-full bg-clay px-6 py-3.5 text-center text-cream shadow-xl shadow-clay/25 transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.02] md:right-8"
-            >
-              <span className="text-[9px] font-bold uppercase tracking-[0.28em] opacity-80">
-                Signature today
-              </span>
-              <span className="font-serif text-base italic">{kitchen.signature.dish} · {kitchen.currencySymbol}{kitchen.signature.price}</span>
-            </a>
-          </div>
-        </div>
       </div>
     </section>
   );
