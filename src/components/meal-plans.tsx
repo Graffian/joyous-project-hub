@@ -1,6 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import {
   Check,
   Star,
