@@ -585,106 +585,186 @@ function HowItWorks() {
 
 function ChalkboardArt() {
   return (
+    // A brass thali, top-down. Small bowls of dal, sabzi, rice, roti — the "board" you pick from.
     <svg viewBox="0 0 220 140" className="h-full w-full" fill="none" aria-hidden>
-      {/* board */}
-      <rect x="28" y="18" width="164" height="104" rx="6" fill="var(--ink)" stroke="color-mix(in oklab, var(--haldi) 55%, transparent)" strokeWidth="1.5" />
-      <rect x="28" y="18" width="164" height="104" rx="6" fill="color-mix(in oklab, var(--cream) 4%, transparent)" />
-      {/* chalk title */}
-      <text x="110" y="42" textAnchor="middle" fontFamily="Fraunces, serif" fontStyle="italic" fontSize="14" fill="var(--haldi)">
-        Today's Board
-      </text>
-      <line x1="70" y1="50" x2="150" y2="50" stroke="color-mix(in oklab, var(--haldi) 50%, transparent)" strokeWidth="0.8" />
-      {/* chalk menu lines */}
-      {[62, 74, 86, 98].map((y, i) => (
-        <g key={y} opacity={0.75}>
-          <circle cx="46" cy={y} r="1.6" fill="var(--haldi)" />
-          <line x1="54" y1={y} x2={130 + (i % 2) * 20} y2={y} stroke="color-mix(in oklab, var(--cream) 55%, transparent)" strokeWidth="1" strokeLinecap="round" />
-          <line x1={145 + (i % 2) * 15} y1={y} x2="170" y2={y} stroke="color-mix(in oklab, var(--cream) 35%, transparent)" strokeWidth="1" strokeLinecap="round" strokeDasharray="2 2" />
-        </g>
-      ))}
-      {/* easel legs */}
-      <line x1="60" y1="122" x2="46" y2="138" stroke="color-mix(in oklab, var(--cream) 35%, transparent)" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="160" y1="122" x2="174" y2="138" stroke="color-mix(in oklab, var(--cream) 35%, transparent)" strokeWidth="1.5" strokeLinecap="round" />
-      {/* steam / sparkle */}
-      <path d="M180 30 q 4 -6 0 -12" stroke="var(--haldi)" strokeWidth="1.2" strokeLinecap="round" fill="none" />
-      <circle cx="188" cy="14" r="1.6" fill="var(--haldi)" />
+      {/* soft ground shadow */}
+      <ellipse cx="110" cy="118" rx="70" ry="6" fill="color-mix(in oklab, var(--ink) 40%, transparent)" opacity="0.35" />
+      {/* brass thali rim */}
+      <circle cx="110" cy="72" r="52" fill="color-mix(in oklab, var(--haldi) 22%, transparent)" stroke="color-mix(in oklab, var(--haldi) 75%, transparent)" strokeWidth="1.4" />
+      <circle cx="110" cy="72" r="46" fill="color-mix(in oklab, var(--cream) 8%, transparent)" stroke="color-mix(in oklab, var(--haldi) 35%, transparent)" strokeWidth="0.8" />
+      {/* engraved dots around the rim */}
+      {Array.from({ length: 18 }).map((_, i) => {
+        const a = (i / 18) * Math.PI * 2;
+        const cx = 110 + Math.cos(a) * 49;
+        const cy = 72 + Math.sin(a) * 49;
+        return <circle key={i} cx={cx} cy={cy} r="0.7" fill="color-mix(in oklab, var(--haldi) 80%, transparent)" />;
+      })}
+      {/* katori: dal (haldi) */}
+      <g>
+        <circle cx="82" cy="56" r="10" fill="color-mix(in oklab, var(--haldi) 55%, transparent)" stroke="color-mix(in oklab, var(--haldi) 90%, transparent)" strokeWidth="1" />
+        <circle cx="82" cy="56" r="6.5" fill="color-mix(in oklab, var(--haldi) 80%, transparent)" />
+        <path d="M80 53 q 2 -1 4 0" stroke="var(--cream)" strokeWidth="0.6" strokeLinecap="round" opacity="0.7" />
+        {/* steam */}
+        <path d="M78 42 q 3 -5 0 -10" stroke="color-mix(in oklab, var(--cream) 60%, transparent)" strokeWidth="1" strokeLinecap="round" />
+        <path d="M84 44 q -3 -4 0 -9" stroke="color-mix(in oklab, var(--cream) 45%, transparent)" strokeWidth="1" strokeLinecap="round" />
+      </g>
+      {/* katori: sabzi (clay) */}
+      <g>
+        <circle cx="138" cy="56" r="10" fill="color-mix(in oklab, var(--clay) 40%, transparent)" stroke="color-mix(in oklab, var(--clay) 90%, transparent)" strokeWidth="1" />
+        <circle cx="138" cy="56" r="6.5" fill="color-mix(in oklab, var(--clay) 65%, transparent)" />
+        <circle cx="136" cy="55" r="1" fill="var(--haldi)" opacity="0.9" />
+        <circle cx="140" cy="57" r="0.8" fill="var(--cream)" opacity="0.6" />
+      </g>
+      {/* rice mound */}
+      <g>
+        <ellipse cx="92" cy="88" rx="12" ry="6" fill="color-mix(in oklab, var(--cream) 85%, transparent)" stroke="color-mix(in oklab, var(--cream) 55%, transparent)" strokeWidth="0.8" />
+        {[[-4,-1],[0,-2],[4,-1],[-2,1],[2,1]].map(([dx,dy],i)=>(
+          <ellipse key={i} cx={92+dx} cy={87+dy} rx="1.2" ry="0.6" fill="color-mix(in oklab, var(--cream) 95%, transparent)" />
+        ))}
+      </g>
+      {/* roti */}
+      <g>
+        <circle cx="130" cy="90" r="10" fill="color-mix(in oklab, var(--haldi) 25%, transparent)" stroke="color-mix(in oklab, var(--haldi) 60%, transparent)" strokeWidth="0.8" />
+        <circle cx="128" cy="87" r="0.9" fill="color-mix(in oklab, var(--clay) 90%, transparent)" />
+        <circle cx="132" cy="92" r="0.7" fill="color-mix(in oklab, var(--clay) 90%, transparent)" />
+        <circle cx="127" cy="93" r="0.6" fill="color-mix(in oklab, var(--clay) 90%, transparent)" />
+      </g>
+      {/* leaf garnish */}
+      <path d="M108 108 q 4 -3 8 0 q -4 3 -8 0 z" fill="color-mix(in oklab, var(--leaf) 70%, transparent)" />
+      <line x1="108" y1="108" x2="118" y2="108" stroke="color-mix(in oklab, var(--leaf) 90%, transparent)" strokeWidth="0.5" />
+      {/* tiny lemon */}
+      <circle cx="118" cy="42" r="3" fill="color-mix(in oklab, var(--haldi) 85%, transparent)" stroke="color-mix(in oklab, var(--haldi) 95%, transparent)" strokeWidth="0.5" />
+      <line x1="116" y1="42" x2="120" y2="42" stroke="color-mix(in oklab, var(--cream) 60%, transparent)" strokeWidth="0.4" />
     </svg>
   );
 }
 
 function WhatsAppNoteArt() {
   return (
+    // A warm chai cup, its steam curling up into a WhatsApp speech bubble with a heart.
     <svg viewBox="0 0 220 140" className="h-full w-full" fill="none" aria-hidden>
-      {/* incoming bubble */}
+      {/* saucer */}
+      <ellipse cx="76" cy="118" rx="42" ry="5" fill="color-mix(in oklab, var(--ink) 50%, transparent)" opacity="0.4" />
+      <ellipse cx="76" cy="112" rx="34" ry="6" fill="color-mix(in oklab, var(--cream) 12%, transparent)" stroke="color-mix(in oklab, var(--cream) 45%, transparent)" strokeWidth="1" />
+      {/* cup body */}
       <path
-        d="M30 40 h100 a10 10 0 0 1 10 10 v22 a10 10 0 0 1 -10 10 h-88 l-14 12 v-12 a10 10 0 0 1 -8 -10 v-22 a10 10 0 0 1 10 -10 z"
-        fill="color-mix(in oklab, var(--cream) 8%, transparent)"
-        stroke="color-mix(in oklab, var(--cream) 25%, transparent)"
-        strokeWidth="1"
-      />
-      <line x1="42" y1="54" x2="118" y2="54" stroke="color-mix(in oklab, var(--cream) 55%, transparent)" strokeWidth="1.2" strokeLinecap="round" />
-      <line x1="42" y1="62" x2="102" y2="62" stroke="color-mix(in oklab, var(--cream) 40%, transparent)" strokeWidth="1.2" strokeLinecap="round" />
-      <line x1="42" y1="70" x2="90" y2="70" stroke="color-mix(in oklab, var(--cream) 30%, transparent)" strokeWidth="1.2" strokeLinecap="round" />
-
-      {/* reply bubble - haldi */}
-      <path
-        d="M190 78 h-70 a10 10 0 0 0 -10 10 v18 a10 10 0 0 0 10 10 h60 l14 10 v-10 a10 10 0 0 0 6 -10 v-18 a10 10 0 0 0 -10 -10 z"
-        fill="color-mix(in oklab, var(--haldi) 18%, transparent)"
+        d="M50 82 h52 l-4 26 a6 6 0 0 1 -6 5 h-32 a6 6 0 0 1 -6 -5 z"
+        fill="color-mix(in oklab, var(--cream) 90%, transparent)"
         stroke="color-mix(in oklab, var(--haldi) 60%, transparent)"
-        strokeWidth="1"
+        strokeWidth="1.2"
       />
-      <text x="128" y="98" fontFamily="Fraunces, serif" fontStyle="italic" fontSize="11" fill="var(--haldi)">
-        ji, confirmed ✓
-      </text>
-      <line x1="128" y1="106" x2="180" y2="106" stroke="color-mix(in oklab, var(--haldi) 50%, transparent)" strokeWidth="1" strokeLinecap="round" />
+      {/* cup rim & chai */}
+      <ellipse cx="76" cy="82" rx="26" ry="4.5" fill="color-mix(in oklab, var(--clay) 55%, transparent)" stroke="color-mix(in oklab, var(--haldi) 70%, transparent)" strokeWidth="1" />
+      <ellipse cx="72" cy="80.5" rx="6" ry="1" fill="color-mix(in oklab, var(--cream) 60%, transparent)" opacity="0.7" />
+      {/* handle */}
+      <path d="M102 88 q 12 4 0 18" stroke="color-mix(in oklab, var(--haldi) 60%, transparent)" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+      {/* haldi stripe on cup */}
+      <line x1="52" y1="92" x2="100" y2="92" stroke="color-mix(in oklab, var(--haldi) 55%, transparent)" strokeWidth="1" strokeDasharray="2 3" />
 
-      {/* tiny WhatsApp mark */}
-      <circle cx="30" cy="30" r="7" fill="var(--haldi)" />
+      {/* steam curls rising toward the bubble */}
+      <path d="M64 74 q -6 -12 4 -22 q 6 -8 -2 -16" stroke="color-mix(in oklab, var(--cream) 45%, transparent)" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M78 74 q 6 -10 -2 -20 q -6 -8 4 -16" stroke="color-mix(in oklab, var(--cream) 35%, transparent)" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M90 74 q -4 -10 4 -18" stroke="color-mix(in oklab, var(--cream) 30%, transparent)" strokeWidth="1.2" strokeLinecap="round" />
+
+      {/* WhatsApp-style bubble, right side */}
       <path
-        d="M27.5 27 c 0 3 2 5 5 5 l1 -1 -1.5 -0.8 -0.8 0.6 c -1 -0.4 -1.7 -1.1 -2.1 -2.1 l 0.6 -0.8 -0.8 -1.5 z"
-        fill="var(--ink)"
+        d="M132 22 h58 a10 10 0 0 1 10 10 v28 a10 10 0 0 1 -10 10 h-46 l-10 10 v-10 h-2 a10 10 0 0 1 -10 -10 v-28 a10 10 0 0 1 10 -10 z"
+        fill="color-mix(in oklab, var(--haldi) 22%, transparent)"
+        stroke="color-mix(in oklab, var(--haldi) 65%, transparent)"
+        strokeWidth="1.2"
       />
+      {/* handwritten confirmation */}
+      <text x="161" y="44" textAnchor="middle" fontFamily="Fraunces, serif" fontStyle="italic" fontSize="12" fill="var(--haldi)">
+        ji, aa raha hai
+      </text>
+      {/* little heart */}
+      <path d="M156 55 c -3 -3 -8 0 -6 4 c 1 3 6 6 6 6 s 5 -3 6 -6 c 2 -4 -3 -7 -6 -4 z"
+            fill="color-mix(in oklab, var(--clay) 85%, transparent)" />
+      {/* double check tick */}
+      <path d="M170 58 l 3 3 l 6 -6 M175 58 l 3 3 l 6 -6" stroke="color-mix(in oklab, var(--cream) 70%, transparent)" strokeWidth="1.2" strokeLinecap="round" fill="none" />
     </svg>
   );
 }
 
 function TiffinArt() {
   return (
+    // Stacked tiffin on a doorstep, an arched doorway glowing warm behind it.
     <svg viewBox="0 0 220 140" className="h-full w-full" fill="none" aria-hidden>
+      {/* arched doorway with warm glow */}
+      <defs>
+        <radialGradient id="doorGlow" cx="50%" cy="70%" r="60%">
+          <stop offset="0%" stopColor="var(--haldi)" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="var(--haldi)" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <path
+        d="M78 118 v-58 a32 32 0 0 1 64 0 v58 z"
+        fill="url(#doorGlow)"
+        stroke="color-mix(in oklab, var(--haldi) 55%, transparent)"
+        strokeWidth="1.2"
+      />
+      {/* door panel lines */}
+      <line x1="110" y1="34" x2="110" y2="118" stroke="color-mix(in oklab, var(--haldi) 40%, transparent)" strokeWidth="0.6" strokeDasharray="2 3" />
+      {/* door handle */}
+      <circle cx="132" cy="90" r="1.4" fill="color-mix(in oklab, var(--haldi) 90%, transparent)" />
+
+      {/* threshold / floor */}
+      <line x1="20" y1="118" x2="200" y2="118" stroke="color-mix(in oklab, var(--cream) 30%, transparent)" strokeWidth="1" />
+      <line x1="20" y1="122" x2="200" y2="122" stroke="color-mix(in oklab, var(--cream) 15%, transparent)" strokeWidth="0.6" strokeDasharray="2 4" />
+
+      {/* soft shadow under tiffin */}
+      <ellipse cx="60" cy="118" rx="26" ry="3" fill="color-mix(in oklab, var(--ink) 50%, transparent)" opacity="0.5" />
+
       {/* steam wisps */}
-      {[70, 90, 110].map((x, i) => (
+      {[52, 60, 68].map((x, i) => (
         <path
           key={x}
-          d={`M${x} 26 q ${i % 2 === 0 ? 6 : -6} -10 0 -18`}
-          stroke="color-mix(in oklab, var(--haldi) 70%, transparent)"
-          strokeWidth="1.4"
+          d={`M${x} 58 q ${i === 1 ? 4 : -4} -8 ${i === 1 ? -2 : 2} -14 q ${i === 1 ? -3 : 3} -6 0 -10`}
+          stroke="color-mix(in oklab, var(--cream) 55%, transparent)"
+          strokeWidth="1.2"
           strokeLinecap="round"
           fill="none"
         />
       ))}
-      {/* handle */}
-      <path d="M75 38 q 15 -14 30 0" stroke="color-mix(in oklab, var(--cream) 70%, transparent)" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      <circle cx="75" cy="38" r="2" fill="color-mix(in oklab, var(--cream) 80%, transparent)" />
-      <circle cx="105" cy="38" r="2" fill="color-mix(in oklab, var(--cream) 80%, transparent)" />
-      {/* tiffin tiers */}
+
+      {/* tiffin — three stacked tins with a curved handle */}
       <g>
-        <rect x="60" y="40" width="60" height="18" rx="3" fill="color-mix(in oklab, var(--cream) 10%, transparent)" stroke="color-mix(in oklab, var(--cream) 55%, transparent)" strokeWidth="1.2" />
-        <rect x="58" y="58" width="64" height="18" rx="3" fill="color-mix(in oklab, var(--haldi) 22%, transparent)" stroke="color-mix(in oklab, var(--haldi) 60%, transparent)" strokeWidth="1.2" />
-        <rect x="56" y="76" width="68" height="20" rx="3" fill="color-mix(in oklab, var(--cream) 10%, transparent)" stroke="color-mix(in oklab, var(--cream) 55%, transparent)" strokeWidth="1.2" />
+        {/* handle */}
+        <path d="M46 62 q 14 -16 28 0" stroke="color-mix(in oklab, var(--cream) 75%, transparent)" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+        <circle cx="46" cy="62" r="1.8" fill="color-mix(in oklab, var(--cream) 85%, transparent)" />
+        <circle cx="74" cy="62" r="1.8" fill="color-mix(in oklab, var(--cream) 85%, transparent)" />
+        {/* lid */}
+        <ellipse cx="60" cy="66" rx="22" ry="4" fill="color-mix(in oklab, var(--cream) 20%, transparent)" stroke="color-mix(in oklab, var(--cream) 70%, transparent)" strokeWidth="1" />
+        {/* tier 1 */}
+        <rect x="38" y="66" width="44" height="14" rx="2" fill="color-mix(in oklab, var(--cream) 10%, transparent)" stroke="color-mix(in oklab, var(--cream) 60%, transparent)" strokeWidth="1.1" />
+        {/* tier 2 — haldi */}
+        <rect x="36" y="80" width="48" height="14" rx="2" fill="color-mix(in oklab, var(--haldi) 28%, transparent)" stroke="color-mix(in oklab, var(--haldi) 65%, transparent)" strokeWidth="1.1" />
+        {/* tier 3 — clay */}
+        <rect x="34" y="94" width="52" height="16" rx="2" fill="color-mix(in oklab, var(--clay) 24%, transparent)" stroke="color-mix(in oklab, var(--clay) 70%, transparent)" strokeWidth="1.1" />
         {/* clasps */}
-        <line x1="56" y1="48" x2="56" y2="94" stroke="color-mix(in oklab, var(--cream) 70%, transparent)" strokeWidth="1.4" strokeLinecap="round" />
-        <line x1="124" y1="48" x2="124" y2="94" stroke="color-mix(in oklab, var(--cream) 70%, transparent)" strokeWidth="1.4" strokeLinecap="round" />
+        <line x1="34" y1="72" x2="34" y2="108" stroke="color-mix(in oklab, var(--cream) 70%, transparent)" strokeWidth="1.4" strokeLinecap="round" />
+        <line x1="86" y1="72" x2="86" y2="108" stroke="color-mix(in oklab, var(--cream) 70%, transparent)" strokeWidth="1.4" strokeLinecap="round" />
+        <circle cx="34" cy="90" r="1.4" fill="color-mix(in oklab, var(--haldi) 90%, transparent)" />
+        <circle cx="86" cy="90" r="1.4" fill="color-mix(in oklab, var(--haldi) 90%, transparent)" />
       </g>
-      {/* doormat / floor line */}
-      <line x1="30" y1="112" x2="190" y2="112" stroke="color-mix(in oklab, var(--cream) 25%, transparent)" strokeWidth="1" strokeDasharray="3 4" />
-      {/* address tag */}
-      <g transform="translate(140 60) rotate(8)">
-        <rect x="0" y="0" width="52" height="30" rx="2" fill="color-mix(in oklab, var(--cream) 90%, transparent)" />
-        <circle cx="4" cy="6" r="1.5" fill="var(--ink)" />
-        <line x1="8" y1="10" x2="46" y2="10" stroke="var(--ink)" strokeWidth="0.8" />
-        <line x1="8" y1="16" x2="40" y2="16" stroke="color-mix(in oklab, var(--ink) 70%, transparent)" strokeWidth="0.8" />
-        <line x1="8" y1="22" x2="34" y2="22" stroke="color-mix(in oklab, var(--ink) 50%, transparent)" strokeWidth="0.8" />
-        <line x1="0" y1="0" x2="-8" y2="-6" stroke="color-mix(in oklab, var(--cream) 70%, transparent)" strokeWidth="1" />
+
+      {/* handwritten address tag */}
+      <g transform="translate(150 74) rotate(6)">
+        <path d="M0 0 l 44 -6 l 4 24 l -46 6 z" fill="color-mix(in oklab, var(--cream) 90%, transparent)" stroke="color-mix(in oklab, var(--ink) 30%, transparent)" strokeWidth="0.6" />
+        <line x1="6" y1="6" x2="40" y2="1" stroke="var(--ink)" strokeWidth="0.7" strokeLinecap="round" />
+        <line x1="6" y1="12" x2="36" y2="7.5" stroke="color-mix(in oklab, var(--ink) 70%, transparent)" strokeWidth="0.6" strokeLinecap="round" />
+        <line x1="6" y1="18" x2="30" y2="14" stroke="color-mix(in oklab, var(--ink) 45%, transparent)" strokeWidth="0.6" strokeLinecap="round" />
+        {/* string */}
+        <path d="M0 0 q -10 -6 -18 -2" stroke="color-mix(in oklab, var(--cream) 70%, transparent)" strokeWidth="0.8" fill="none" />
+      </g>
+
+      {/* tiny marigold on the threshold */}
+      <g transform="translate(178 116)">
+        {Array.from({ length: 6 }).map((_, i) => {
+          const a = (i / 6) * Math.PI * 2;
+          return <circle key={i} cx={Math.cos(a) * 2.2} cy={Math.sin(a) * 2.2} r="1.6" fill="color-mix(in oklab, var(--haldi) 80%, transparent)" />;
+        })}
+        <circle r="1.6" fill="var(--clay)" />
       </g>
     </svg>
   );
