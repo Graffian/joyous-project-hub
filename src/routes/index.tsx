@@ -58,7 +58,7 @@ function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground paper-grain">
       <SiteHeader />
-      <Hero />
+      <MenuTopBar />
       <Menu />
       <MealPlansSection />
       <CookNote />
@@ -67,6 +67,40 @@ function Home() {
       <SiteFooter />
       <WhatsAppFab />
     </div>
+  );
+}
+
+/* ---------- Compact top bar (Zomato-style quick info above the menu) ---------- */
+
+function MenuTopBar() {
+  const today = useTodayLabel();
+  const items = [
+    { k: "Today", v: today },
+    { k: "Lunch by", v: kitchen.timing.lunchBy },
+    { k: "Dinner by", v: kitchen.timing.dinnerBy },
+    { k: "Delivery", v: kitchen.delivery.zones },
+  ];
+  return (
+    <section aria-label="Kitchen status" className="border-b border-border/70 bg-background">
+      <div className="mx-auto flex max-w-6xl items-center gap-3 overflow-x-auto px-5 py-3 md:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-leaf/30 bg-leaf/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-leaf">
+          <span className="h-1.5 w-1.5 rounded-full bg-leaf" /> Kitchen open
+        </span>
+        {items.map((it) => (
+          <span
+            key={it.k}
+            suppressHydrationWarning
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-ink/10 bg-cream/60 px-3 py-1 text-[11px] text-ink/80"
+          >
+            <MapPin className="h-3 w-3 text-clay" />
+            <span className="font-bold uppercase tracking-[0.18em] text-muted-foreground text-[9.5px]">
+              {it.k}
+            </span>
+            <span className="font-serif italic text-ink">{it.v}</span>
+          </span>
+        ))}
+      </div>
+    </section>
   );
 }
 
