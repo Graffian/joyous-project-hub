@@ -1,10 +1,28 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Star, Truck, Utensils, Moon, Sun } from "lucide-react";
+import { useState } from "react";
+import {
+  Check,
+  Star,
+  Truck,
+  Utensils,
+  Moon,
+  Sun,
+  Sparkles,
+  Leaf,
+  RefreshCw,
+  Plus,
+  Salad,
+  CookingPot,
+  Soup,
+  Wheat,
+} from "lucide-react";
 import { whatsappUrl } from "@/lib/menu";
 import { kitchen } from "@/lib/kitchen-config";
 import { weeklyMenuQueryOptions, type WeeklyMenuRow } from "@/lib/queries";
 import { WhatsAppIcon } from "@/components/site-header";
+import { imageForKey } from "@/lib/menu-images";
+import heroThali from "@/assets/hero-thali.jpg";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 const DAY_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
