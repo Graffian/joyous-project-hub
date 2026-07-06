@@ -527,7 +527,7 @@ function HowItWorks() {
           {/* dashed thread connecting the three illustration midlines, desktop only */}
           <svg
             aria-hidden
-            className="pointer-events-none absolute inset-x-[16.6%] top-[124px] hidden h-5 w-[66.8%] text-haldi/70 md:block"
+            className="pointer-events-none absolute inset-x-[16.6%] top-[108px] hidden h-5 w-[66.8%] text-haldi/70 md:block"
             preserveAspectRatio="none"
             viewBox="0 0 1000 20"
             fill="none"
@@ -545,25 +545,34 @@ function HowItWorks() {
           {steps.map((s) => (
             <li
               key={s.k}
-              className="group relative flex flex-col rounded-2xl border border-cream/10 bg-cream/[0.03] p-6 backdrop-blur-sm transition-colors hover:border-haldi/30 hover:bg-cream/[0.05] md:p-7"
+              className="group relative flex flex-col rounded-2xl border border-cream/10 bg-cream/[0.03] p-5 backdrop-blur-sm transition-colors hover:border-haldi/30 hover:bg-cream/[0.05] md:p-7"
             >
               {/* illustration card */}
-              <div className="relative mx-auto flex h-40 w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-cream/[0.06] to-transparent">
-                <div className="absolute inset-x-6 bottom-3 h-px bg-haldi/20" />
+              <div className="relative mx-auto flex h-32 w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-cream/[0.07] via-cream/[0.02] to-transparent md:h-40">
+                <div className="absolute inset-x-6 bottom-3 h-px bg-haldi/25" />
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 opacity-[0.06]"
+                  style={{
+                    backgroundImage:
+                      "radial-gradient(circle at 20% 30%, var(--haldi) 0.5px, transparent 0.6px), radial-gradient(circle at 70% 60%, var(--cream) 0.5px, transparent 0.6px)",
+                    backgroundSize: "22px 22px, 30px 30px",
+                  }}
+                />
                 {s.illustration}
               </div>
 
-              <div className="mt-6 flex items-baseline gap-3">
+              <div className="mt-5 flex items-baseline gap-3 md:mt-6">
                 <span className="font-serif text-xl italic text-haldi">{s.k}</span>
                 <span className="h-px flex-1 bg-cream/10" />
                 <span className="text-[9px] font-bold uppercase tracking-[0.28em] text-cream/50">
                   {s.tag}
                 </span>
               </div>
-              <h3 className="mt-3 font-serif text-xl leading-tight text-cream md:text-[1.4rem]">
+              <h3 className="mt-2.5 font-serif text-lg leading-tight text-cream md:mt-3 md:text-[1.4rem]">
                 {s.title}
               </h3>
-              <p className="mt-2 text-[13px] leading-relaxed text-cream/60">{s.body}</p>
+              <p className="mt-2 text-[12.5px] leading-relaxed text-cream/60 md:text-[13px]">{s.body}</p>
             </li>
           ))}
         </ol>
