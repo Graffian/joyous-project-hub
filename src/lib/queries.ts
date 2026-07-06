@@ -71,6 +71,8 @@ export type WeeklyMenuRow = {
   day: number;
   meal: "Lunch" | "Dinner";
   dishes: string[];
+  featured_dish: string | null;
+  image_url: string | null;
 };
 
 export const weeklyMenuQueryOptions = queryOptions({
@@ -78,7 +80,7 @@ export const weeklyMenuQueryOptions = queryOptions({
   queryFn: async (): Promise<WeeklyMenuRow[]> => {
     const { data, error } = await supabase
       .from("weekly_menu")
-      .select("id,day,meal,dishes")
+      .select("id,day,meal,dishes,featured_dish,image_url")
       .order("day", { ascending: true })
       .order("meal", { ascending: true });
     if (error) throw error;

@@ -20,8 +20,10 @@ const DAYS = [
 ] as const;
 
 type Meal = "Lunch" | "Dinner";
-type DraftMap = Record<string, string>;
+type DraftCell = { dishes: string; featured: string; image: string };
+type DraftMap = Record<string, DraftCell>;
 const cellKey = (day: number, meal: Meal) => `${day}-${meal}`;
+const emptyCell = (): DraftCell => ({ dishes: "", featured: "", image: "" });
 
 function AdminWeekly() {
   const qc = useQueryClient();
@@ -31,27 +33,44 @@ function AdminWeekly() {
   useEffect(() => {
     const next: DraftMap = {};
     for (const row of data as WeeklyMenuRow[]) {
-      next[cellKey(row.day, row.meal)] = (row.dishes ?? []).join("\n");
+      next[cellKey(row.day, row.meal)] = {
+        dishes: (row.dishes ?? []).join("\n"),
+        featured: row.featured_dish ?? "",
+        image: row.image_url ?? "",
+      };
     }
     // Ensure all cells exist
     for (const d of DAYS) {
       for (const m of ["Lunch", "Dinner"] as const) {
         const k = cellKey(d.n, m);
-        if (!(k in next)) next[k] = "";
+        if (!(k in next)) next[k] = emptyCell();
       }
     }
     setDraft(next);
   }, [data]);
 
   const save = useMutation({
-    mutationFn: async ({ day, meal, text }: { day: number; meal: Meal; text: string }) => {
-      const dishes = text
+    mutationFn: async ({
+      day,
+      meal,
+      cell,
+    }: {
+      day: number;
+      meal: Meal;
+      cell: DraftCell;
+    }) => {
+      const dishes = cell.dishes
         .split("\n")
         .map((s) => s.replace(/^[•\-·]\s*/, "").trim())
         .filter(Boolean);
+      const featured_dish = cell.featured.trim() || null;
+      const image_url = cell.image.trim() || null;
       const { error } = await supabase
         .from("weekly_menu")
-        .upsert({ day, meal, dishes } as never, { onConflict: "day,meal" });
+        .upsert(
+          { day, meal, dishes, featured_dish, image_url } as never,
+          { onConflict: "day,meal" },
+        );
       if (error) throw error;
     },
     onSuccess: () => {
@@ -68,7 +87,7 @@ function AdminWeekly() {
       <div>
         <h1 className="font-serif text-3xl text-ink">This Week's Menu</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Write one dish per line. Changes go live on the homepage instantly.
+          Set a <strong>featured dish</strong> (e.g. "Dalma Day"), an optional image URL, and the full plate — one dish per line. Changes go live on the homepage instantly.
         </p>
       </div>
 
@@ -84,24 +103,58 @@ function AdminWeekly() {
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               {(["Lunch", "Dinner"] as const).map((meal) => {
                 const k = cellKey(d.n, meal);
+                const cell = draft[k] ?? emptyCell();
+                const update = (patch: Partial<DraftCell>) =>
+                  setDraft((prev) => ({ ...prev, [k]: { ...(prev[k] ?? emptyCell()), ...patch } }));
                 return (
-                  <div key={meal}>
+                  <div key={meal} className="rounded-xl border border-border bg-background/60 p-4">
                     <label className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">
                       {meal}
                     </label>
-                    <textarea
-                      value={draft[k] ?? ""}
-                      onChange={(e) => setDraft((prev) => ({ ...prev, [k]: e.target.value }))}
-                      rows={5}
-                      placeholder={"Dish 1\nDish 2\nDish 3"}
-                      className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-ink"
-                    />
-                    <div className="mt-2 flex justify-end">
+
+                    <div className="mt-3 grid gap-3">
+                      <div>
+                        <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ink/70">
+                          Featured dish
+                        </label>
+                        <input
+                          type="text"
+                          value={cell.featured}
+                          onChange={(e) => update({ featured: e.target.value })}
+                          placeholder="e.g. Dalma Day"
+                          className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-ink"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ink/70">
+                          Image URL <span className="text-muted-foreground/70">(optional)</span>
+                        </label>
+                        <input
+                          type="url"
+                          value={cell.image}
+                          onChange={(e) => update({ image: e.target.value })}
+                          placeholder="https://…"
+                          className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-ink"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ink/70">
+                          Full plate (one per line)
+                        </label>
+                        <textarea
+                          value={cell.dishes}
+                          onChange={(e) => update({ dishes: e.target.value })}
+                          rows={5}
+                          placeholder={"Rice\nDal Tadka\nAloo Baingan\nSalad & Pickle"}
+                          className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-ink"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex justify-end">
                       <button
                         disabled={save.isPending}
-                        onClick={() =>
-                          save.mutate({ day: d.n, meal, text: draft[k] ?? "" })
-                        }
+                        onClick={() => save.mutate({ day: d.n, meal, cell })}
                         className="inline-flex items-center gap-1.5 rounded-full bg-ink px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-cream disabled:opacity-60"
                       >
                         {save.isPending ? (

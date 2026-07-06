@@ -225,21 +225,27 @@ export type Database = {
         Row: {
           day: number
           dishes: string[]
+          featured_dish: string | null
           id: string
+          image_url: string | null
           meal: string
           updated_at: string
         }
         Insert: {
           day: number
           dishes?: string[]
+          featured_dish?: string | null
           id?: string
+          image_url?: string | null
           meal: string
           updated_at?: string
         }
         Update: {
           day?: number
           dishes?: string[]
+          featured_dish?: string | null
           id?: string
+          image_url?: string | null
           meal?: string
           updated_at?: string
         }
