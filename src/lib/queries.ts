@@ -65,3 +65,24 @@ export const adminApplicationsQueryOptions = queryOptions({
     return data ?? [];
   },
 });
+
+export type WeeklyMenuRow = {
+  id: string;
+  day: number;
+  meal: "Lunch" | "Dinner";
+  dishes: string[];
+};
+
+export const weeklyMenuQueryOptions = queryOptions({
+  queryKey: ["weekly_menu"],
+  queryFn: async (): Promise<WeeklyMenuRow[]> => {
+    const { data, error } = await supabase
+      .from("weekly_menu")
+      .select("id,day,meal,dishes")
+      .order("day", { ascending: true })
+      .order("meal", { ascending: true });
+    if (error) throw error;
+    return (data ?? []) as WeeklyMenuRow[];
+  },
+  staleTime: 60_000,
+});
