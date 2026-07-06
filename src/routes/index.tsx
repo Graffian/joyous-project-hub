@@ -10,13 +10,15 @@ import { WhatsAppFab } from "@/components/whatsapp-fab";
 import { useReveal } from "@/hooks/use-reveal";
 import { whatsappUrl, type Dish } from "@/lib/menu";
 import { kitchen } from "@/lib/kitchen-config";
-import { menuQueryOptions } from "@/lib/queries";
+import { menuQueryOptions, weeklyMenuQueryOptions } from "@/lib/queries";
 import { useCart } from "@/lib/cart";
+import { MealPlansSection } from "@/components/meal-plans";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => {
     void context.queryClient.prefetchQuery(menuQueryOptions);
+    void context.queryClient.prefetchQuery(weeklyMenuQueryOptions);
   },
   component: Home,
 });
@@ -58,6 +60,7 @@ function Home() {
       <SiteHeader />
       <Hero />
       <Menu />
+      <MealPlansSection />
       <CookNote />
       <HowItWorks />
       <KitchensStrip />
