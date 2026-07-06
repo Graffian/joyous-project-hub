@@ -353,7 +353,7 @@ function WeeklyMenu() {
                           Day {day}
                         </span>
                         <span className="h-1 w-1 rounded-full bg-clay/50" />
-                        <span className="font-serif text-[13.5px] italic text-clay">{short}day</span>
+                        <span className="font-serif text-[13.5px] italic text-clay">{short}</span>
                       </div>
                       <div className="mt-1 truncate font-serif text-[17px] text-ink">
                         {DAY_FULL[i]}
@@ -409,7 +409,7 @@ function WeeklyMenu() {
                     </div>
                     <div className="absolute inset-x-0 bottom-0 p-4">
                       <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-cream/75">
-                        {short}day
+                        {short}
                       </p>
                       <h4 className="mt-0.5 font-serif text-xl leading-tight text-cream">
                         {DAY_FULL[i]}
