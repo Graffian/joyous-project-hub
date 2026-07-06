@@ -795,9 +795,8 @@ function KitchensStrip() {
             </p>
 
             {/* Perks strip */}
-            <ul className="mt-8 grid grid-cols-3 gap-3 border-t border-cream/15 pt-6 md:max-w-md md:gap-4">
+            <ul className="mt-8 grid grid-cols-2 gap-3 border-t border-cream/15 pt-6 md:max-w-md md:gap-4">
               {[
-                { k: "Earn", v: `${kitchen.currencySymbol}15–40k /mo` },
                 { k: "Cook", v: "3–10 dishes" },
                 { k: "Own", v: "Your hours" },
               ].map((p) => (
