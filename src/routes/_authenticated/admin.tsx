@@ -10,6 +10,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 const tabs = [
   { to: "/admin/menu", label: "Menu" },
+  { to: "/admin/weekly", label: "Weekly" },
   { to: "/admin/orders", label: "Orders" },
   { to: "/admin/applications", label: "Cooks" },
 ] as const;

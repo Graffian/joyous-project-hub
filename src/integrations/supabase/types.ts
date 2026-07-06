@@ -221,6 +221,30 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_menu: {
+        Row: {
+          day: number
+          dishes: string[]
+          id: string
+          meal: string
+          updated_at: string
+        }
+        Insert: {
+          day: number
+          dishes?: string[]
+          id?: string
+          meal: string
+          updated_at?: string
+        }
+        Update: {
+          day?: number
+          dishes?: string[]
+          id?: string
+          meal?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
