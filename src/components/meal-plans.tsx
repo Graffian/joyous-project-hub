@@ -15,6 +15,7 @@ import {
   CookingPot,
   Soup,
   Wheat,
+  ChevronDown,
 } from "lucide-react";
 import { whatsappUrl } from "@/lib/menu";
 import { kitchen } from "@/lib/kitchen-config";
@@ -274,7 +275,7 @@ function PlanCard({ plan }: { plan: Plan }) {
 
 function WeeklyMenu() {
   const { data = [], isLoading } = useQuery(weeklyMenuQueryOptions);
-  const [active, setActive] = useState(0);
+  const [openDay, setOpenDay] = useState(1); // mobile accordion — start with Monday open
 
   type Cell = { dishes: string[]; featured: string | null; image: string | null };
   const byDay = useMemo(() => {
@@ -293,9 +294,6 @@ function WeeklyMenu() {
     }
     return map;
   }, [data]);
-
-  const activeDay = active + 1;
-  const cells = byDay.get(activeDay);
 
   return (
     <div className="mt-24">
@@ -316,54 +314,113 @@ function WeeklyMenu() {
         <div className="mt-10 text-center text-sm text-muted-foreground">Loading this week's menu…</div>
       ) : (
         <>
-          {/* Day selector */}
-          <div className="mt-10 -mx-5 overflow-x-auto px-5 md:mx-0 md:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="mx-auto flex w-max gap-2 md:w-auto md:justify-center">
-              {DAYS.map((label, i) => {
-                const isActive = i === active;
-                return (
+          {/* MOBILE: one accordion card per day. Tap to expand Lunch + Dinner. */}
+          <div className="mt-10 space-y-3 md:hidden">
+            {DAYS.map((short, i) => {
+              const day = i + 1;
+              const cells = byDay.get(day) ?? {
+                Lunch: { dishes: [], featured: null, image: null },
+                Dinner: { dishes: [], featured: null, image: null },
+              };
+              const isOpen = openDay === day;
+              const heroCell = cells.Lunch.featured || cells.Lunch.dishes.length ? cells.Lunch : cells.Dinner;
+              const heroImage = pickImage(heroCell.featured, heroCell.dishes, heroCell.image);
+              const lunchTitle = cells.Lunch.featured ?? cells.Lunch.dishes[0] ?? "Chef's pick";
+              return (
+                <article
+                  key={short}
+                  className={`overflow-hidden rounded-2xl border bg-background transition-all ${
+                    isOpen ? "border-clay/40 shadow-[0_24px_50px_-30px_rgba(180,90,60,0.4)]" : "border-ink/10"
+                  }`}
+                >
                   <button
-                    key={label}
-                    onClick={() => setActive(i)}
-                    className={`group flex min-w-[76px] flex-col items-center gap-1 rounded-2xl border px-4 py-3 transition-all duration-300 md:min-w-[92px] ${
-                      isActive
-                        ? "-translate-y-0.5 border-clay/40 bg-clay text-cream shadow-[0_18px_36px_-20px_rgba(180,90,60,0.6)]"
-                        : "border-ink/10 bg-background/70 text-ink hover:border-clay/30 hover:-translate-y-0.5"
-                    }`}
+                    type="button"
+                    onClick={() => setOpenDay(isOpen ? -1 : day)}
+                    aria-expanded={isOpen}
+                    className="flex w-full items-stretch gap-3 p-3 text-left"
                   >
-                    <span
-                      className={`text-[9px] font-bold uppercase tracking-[0.24em] ${
-                        isActive ? "text-cream/70" : "text-muted-foreground"
+                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-cream">
+                      <img
+                        src={heroImage}
+                        alt={`${DAY_FULL[i]} meal preview`}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="flex min-w-0 flex-1 flex-col justify-center">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9.5px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
+                          Day {day}
+                        </span>
+                        <span className="h-1 w-1 rounded-full bg-clay/50" />
+                        <span className="font-serif text-[13.5px] italic text-clay">{short}</span>
+                      </div>
+                      <div className="mt-1 truncate font-serif text-[17px] text-ink">
+                        {DAY_FULL[i]}
+                      </div>
+                      <div className="mt-0.5 truncate text-[11.5px] text-muted-foreground">
+                        Lunch · {lunchTitle}
+                      </div>
+                    </div>
+                    <ChevronDown
+                      className={`mt-1 h-5 w-5 shrink-0 text-clay transition-transform duration-300 ${
+                        isOpen ? "rotate-180" : ""
                       }`}
-                    >
-                      Day {i + 1}
-                    </span>
-                    <span
-                      className={`font-serif text-lg italic ${
-                        isActive ? "text-cream" : "text-clay"
-                      }`}
-                    >
-                      {label}
-                    </span>
+                      strokeWidth={1.75}
+                    />
                   </button>
-                );
-              })}
-            </div>
+
+                  {isOpen && (
+                    <div className="grid gap-3 border-t border-dashed border-ink/10 p-3 pt-4">
+                      <MealBlock meal="Lunch" cell={cells.Lunch} />
+                      <MealBlock meal="Dinner" cell={cells.Dinner} />
+                    </div>
+                  )}
+                </article>
+              );
+            })}
           </div>
 
-          {/* Featured lunch + dinner for the active day */}
-          <div key={activeDay} className="mt-8 grid gap-5 md:grid-cols-2 md:gap-6">
-            {(["Lunch", "Dinner"] as const).map((meal) => {
-              const cell = cells?.[meal] ?? { dishes: [], featured: null, image: null };
+          {/* DESKTOP: 3-col grid, all six days visible */}
+          <div className="mt-10 hidden gap-5 md:grid md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+            {DAYS.map((short, i) => {
+              const day = i + 1;
+              const cells = byDay.get(day) ?? {
+                Lunch: { dishes: [], featured: null, image: null },
+                Dinner: { dishes: [], featured: null, image: null },
+              };
+              const heroCell = cells.Lunch.featured || cells.Lunch.dishes.length ? cells.Lunch : cells.Dinner;
+              const heroImage = pickImage(heroCell.featured, heroCell.dishes, heroCell.image);
               return (
-                <FeatureMealCard
-                  key={meal}
-                  day={DAY_FULL[active]}
-                  meal={meal}
-                  featured={cell.featured}
-                  dishes={cell.dishes}
-                  image={pickImage(cell.featured, cell.dishes, cell.image)}
-                />
+                <article
+                  key={short}
+                  className="group flex flex-col overflow-hidden rounded-3xl border border-ink/10 bg-background shadow-[0_20px_50px_-38px_rgba(30,20,15,0.45)] transition-all duration-500 hover:-translate-y-1 hover:border-clay/30 hover:shadow-[0_28px_60px_-30px_rgba(180,90,60,0.3)]"
+                >
+                  <div className="relative aspect-[16/10] overflow-hidden bg-cream">
+                    <img
+                      src={heroImage}
+                      alt={`${DAY_FULL[i]} meal`}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-[900ms] group-hover:scale-[1.06]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-transparent to-transparent" />
+                    <div className="absolute left-4 top-4 rounded-full bg-background/85 px-3 py-1 text-[9.5px] font-bold uppercase tracking-[0.24em] text-ink backdrop-blur">
+                      Day {day}
+                    </div>
+                    <div className="absolute inset-x-0 bottom-0 p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-cream/75">
+                        {short}
+                      </p>
+                      <h4 className="mt-0.5 font-serif text-xl leading-tight text-cream">
+                        {DAY_FULL[i]}
+                      </h4>
+                    </div>
+                  </div>
+                  <div className="grid flex-1 gap-3 p-4">
+                    <MealBlock meal="Lunch" cell={cells.Lunch} />
+                    <MealBlock meal="Dinner" cell={cells.Dinner} />
+                  </div>
+                </article>
               );
             })}
           </div>
@@ -378,7 +435,7 @@ function WeeklyMenu() {
                 Menu rotates regularly
               </p>
               <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground md:text-[13px]">
-                The dishes shown are sample meals. Our menu changes with seasonal vegetables, homemaker specialties, and ingredient availability.
+                The dishes shown are sample meals. Menu changes regularly based on seasonal vegetables, homemaker specialties, and ingredient availability.
               </p>
             </div>
           </div>
@@ -391,81 +448,50 @@ function WeeklyMenu() {
   );
 }
 
-function FeatureMealCard({
-  day,
+function MealBlock({
   meal,
-  featured,
-  dishes,
-  image,
+  cell,
 }: {
-  day: string;
   meal: "Lunch" | "Dinner";
-  featured: string | null;
-  dishes: string[];
-  image: string;
+  cell: { dishes: string[]; featured: string | null; image: string | null };
 }) {
   const isLunch = meal === "Lunch";
-  const title = featured ?? dishes[0] ?? "Chef's Special";
+  const title = cell.featured ?? cell.dishes[0] ?? "Chef's pick";
+  const extras = cell.featured ? cell.dishes : cell.dishes.slice(1);
   return (
-    <article className="group overflow-hidden rounded-3xl border border-ink/10 bg-background shadow-[0_24px_60px_-38px_rgba(30,20,15,0.45)] transition-all duration-500 hover:-translate-y-1 hover:border-clay/30 hover:shadow-[0_30px_70px_-30px_rgba(180,90,60,0.35)]">
-      <div className="relative aspect-[16/10] overflow-hidden bg-cream">
-        <img
-          src={image}
-          alt={`${title} — ${meal} on ${day}`}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-[900ms] group-hover:scale-[1.06]"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/10 to-transparent" />
-        <div className="absolute left-4 top-4 flex items-center gap-2">
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] backdrop-blur ${
-              isLunch ? "bg-haldi/90 text-ink" : "bg-ink/80 text-cream"
-            }`}
-          >
-            {isLunch ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}
-            {meal}
-          </span>
-        </div>
-        <div className="absolute right-4 top-4 rounded-full bg-background/85 px-3 py-1 text-[9.5px] font-bold uppercase tracking-[0.24em] text-ink backdrop-blur">
-          {day}
-        </div>
-        <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-cream/70">
-            Featured
-          </p>
-          <h4 className="mt-1 font-serif text-2xl leading-tight text-cream md:text-[1.75rem]">
-            {title}
-          </h4>
-        </div>
+    <div
+      className={`rounded-xl border p-3 ${
+        isLunch ? "border-haldi/25 bg-haldi/[0.06]" : "border-clay/25 bg-clay/[0.05]"
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <span
+          className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+            isLunch ? "bg-haldi/25 text-ink" : "bg-clay/20 text-clay"
+          }`}
+        >
+          {isLunch ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}
+        </span>
+        <span
+          className={`text-[10px] font-bold uppercase tracking-[0.24em] ${
+            isLunch ? "text-ink/80" : "text-clay"
+          }`}
+        >
+          {meal}
+        </span>
       </div>
-
-      <div className="p-5 md:p-6">
-        <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">
-          In this plate
-        </p>
-        {dishes.length === 0 ? (
-          <p className="mt-3 text-[13px] italic text-muted-foreground/70">
-            Chef's pick — announced fresh on the day.
-          </p>
-        ) : (
-          <ul className="mt-3 grid gap-1.5 sm:grid-cols-2">
-            {dishes.map((d) => (
-              <li
-                key={d}
-                className="flex items-start gap-2 text-[13px] leading-snug text-ink/85"
-              >
-                <span
-                  className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${
-                    isLunch ? "bg-haldi" : "bg-clay"
-                  }`}
-                />
-                <span>{d}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </article>
+      <p className="mt-1.5 font-serif text-[15px] leading-snug text-ink">{title}</p>
+      {extras.length > 0 && (
+        <ul className="mt-1.5 flex flex-wrap gap-x-2.5 gap-y-1 text-[11.5px] leading-tight text-muted-foreground">
+          {extras.map((d, idx) => (
+            <li key={d} className="flex items-center gap-1.5">
+              {idx > 0 && <span className="h-0.5 w-0.5 rounded-full bg-muted-foreground/50" />}
+              <span>{d}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -502,7 +528,7 @@ function MealIncludesStrip() {
       <div className="mt-5 flex items-center justify-center gap-2 rounded-full border border-dashed border-ink/15 bg-cream/40 px-4 py-2.5 text-center">
         <Plus className="h-3.5 w-3.5 text-clay" strokeWidth={2.5} />
         <p className="text-[12px] text-muted-foreground">
-          <span className="font-semibold text-ink">Extra rotis available</span> — order additional rotis separately anytime.
+          <span className="font-semibold text-ink">Extra rotis available</span> at additional cost.
         </p>
       </div>
     </div>
