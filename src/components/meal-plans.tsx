@@ -528,7 +528,7 @@ function MealIncludesStrip() {
       <div className="mt-5 flex items-center justify-center gap-2 rounded-full border border-dashed border-ink/15 bg-cream/40 px-4 py-2.5 text-center">
         <Plus className="h-3.5 w-3.5 text-clay" strokeWidth={2.5} />
         <p className="text-[12px] text-muted-foreground">
-          <span className="font-semibold text-ink">Extra rotis available</span> — order additional rotis separately anytime.
+          <span className="font-semibold text-ink">Extra rotis available</span> at additional cost.
         </p>
       </div>
     </div>
