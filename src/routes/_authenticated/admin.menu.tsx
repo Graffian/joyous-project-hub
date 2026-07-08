@@ -6,6 +6,7 @@ import { adminMenuQueryOptions } from "@/lib/queries";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Pencil, X, Check } from "lucide-react";
 import { kitchen } from "@/lib/kitchen-config";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export const Route = createFileRoute("/_authenticated/admin/menu")({
   component: AdminMenu,
@@ -23,6 +24,7 @@ type MenuRow = {
   sold_out: boolean;
   active: boolean;
   sort_order: number;
+  image_url: string | null;
 };
 
 const MEALS = ["Lunch", "Snack", "Dinner"] as const;
@@ -52,6 +54,7 @@ function AdminMenu() {
     sold_out: false,
     active: true,
     sort_order: 100,
+    image_url: null,
   });
 
   const update = useMutation({
@@ -82,6 +85,7 @@ function AdminMenu() {
         sold_out: !!row.sold_out,
         active: row.active ?? true,
         sort_order: Number(row.sort_order ?? 100),
+        image_url: row.image_url ?? null,
       } as never);
       if (error) throw error;
     },
@@ -99,6 +103,7 @@ function AdminMenu() {
         sold_out: false,
         active: true,
         sort_order: 100,
+        image_url: null,
       });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -125,6 +130,7 @@ function AdminMenu() {
       meal: row.meal,
       veg: row.veg,
       sort_order: row.sort_order,
+      image_url: row.image_url,
     });
   }
 
@@ -241,6 +247,14 @@ function AdminMenu() {
                 Active
               </label>
             </div>
+            <div className="md:col-span-2">
+              <label className="text-xs text-muted-foreground">Image (optional)</label>
+              <ImageUpload
+                value={newRow.image_url ?? null}
+                onChange={(v) => setNewRow({ ...newRow, image_url: v })}
+                className="mt-1"
+              />
+            </div>
           </div>
           <div className="mt-4 flex justify-end">
             <button
@@ -277,26 +291,51 @@ function AdminMenu() {
                   <td className="p-3">
                     {isEditing ? (
                       <div className="space-y-2">
-                        <input
-                          value={draft.name ?? ""}
-                          onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                          className="w-full rounded border border-input bg-background px-2 py-1 text-sm text-ink"
-                        />
-                        <textarea
-                          value={draft.description ?? ""}
-                          onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                          className="w-full rounded border border-input bg-background px-2 py-1 text-xs text-ink"
-                          rows={2}
-                        />
+                        <div className="flex gap-3">
+                          <ImageUpload
+                            value={draft.image_url ?? null}
+                            onChange={(v) => setDraft({ ...draft, image_url: v })}
+                          />
+                          <div className="flex-1 space-y-2">
+                            <input
+                              value={draft.name ?? ""}
+                              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                              className="w-full rounded border border-input bg-background px-2 py-1 text-sm text-ink"
+                            />
+                            <textarea
+                              value={draft.description ?? ""}
+                              onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                              className="w-full rounded border border-input bg-background px-2 py-1 text-xs text-ink"
+                              rows={2}
+                            />
+                          </div>
+                        </div>
                       </div>
                     ) : (
-                      <>
-                        <div className="font-medium text-ink">{row.name}</div>
-                        <div className="mt-0.5 max-w-sm text-xs text-muted-foreground">{row.description}</div>
-                        <div className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground/70">
-                          {row.key}
+                      <div className="flex items-start gap-3">
+                        {row.image_url && (
+                          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-cream">
+                            <img
+                              src={row.image_url ?? ""}
+                              alt={row.name}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                const t = e.currentTarget;
+                                if (t.src !== "") {
+                                  t.style.display = "none";
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="font-medium text-ink">{row.name}</div>
+                          <div className="mt-0.5 max-w-sm text-xs text-muted-foreground">{row.description}</div>
+                          <div className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground/70">
+                            {row.key}
+                          </div>
                         </div>
-                      </>
+                      </div>
                     )}
                   </td>
                   <td className="p-3">

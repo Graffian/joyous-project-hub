@@ -2,16 +2,36 @@ import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { imageForKey } from "./menu-images";
 import type { Dish } from "./menu";
+import { computeAnalytics, type Analytics } from "./analytics";
 
 export const menuQueryOptions = queryOptions({
   queryKey: ["menu-items", "active"],
   queryFn: async (): Promise<Dish[]> => {
     const { data, error } = await supabase
       .from("menu_items")
-      .select("id,key,name,description,price,meal,veg,signature,sold_out,sort_order")
+      .select("id,key,name,description,price,meal,veg,signature,sold_out,sort_order,image_url")
       .eq("active", true)
       .order("sort_order", { ascending: true });
-    if (error) throw error;
+    if (error) {
+      const { data: d2, error: e2 } = await supabase
+        .from("menu_items")
+        .select("id,key,name,description,price,meal,veg,signature,sold_out,sort_order")
+        .eq("active", true)
+        .order("sort_order", { ascending: true });
+      if (e2) throw e2;
+      return (d2 ?? []).map((r) => ({
+        id: r.id,
+        key: r.key,
+        name: r.name,
+        desc: r.description,
+        price: r.price,
+        meal: r.meal as Dish["meal"],
+        veg: r.veg,
+        signature: r.signature,
+        soldOut: r.sold_out,
+        image: imageForKey(r.key),
+      }));
+    }
     return (data ?? []).map((r) => ({
       id: r.id,
       key: r.key,
@@ -22,7 +42,7 @@ export const menuQueryOptions = queryOptions({
       veg: r.veg,
       signature: r.signature,
       soldOut: r.sold_out,
-      image: imageForKey(r.key),
+      image: imageForKey(r.key, r.image_url),
     }));
   },
   staleTime: 60_000,
@@ -85,6 +105,20 @@ export const weeklyMenuQueryOptions = queryOptions({
       .order("meal", { ascending: true });
     if (error) throw error;
     return (data ?? []) as WeeklyMenuRow[];
+  },
+  staleTime: 60_000,
+});
+
+export const analyticsQueryOptions = queryOptions({
+  queryKey: ["analytics"],
+  queryFn: async (): Promise<Analytics> => {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("status, price, quantity, created_at, dish_name")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (error) throw error;
+    return computeAnalytics(data as never[] ?? []);
   },
   staleTime: 60_000,
 });

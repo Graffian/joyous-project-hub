@@ -23,6 +23,11 @@ const map: Record<string, string> = {
   kheeri,
 };
 
-export function imageForKey(key: string): string {
+export function imageForKey(key: string, dbImageUrl?: string | null): string {
+  if (dbImageUrl) return dbImageUrl;
   return map[key] ?? fallback;
+}
+
+export function imageKeyMap(): Record<string, string> {
+  return map;
 }

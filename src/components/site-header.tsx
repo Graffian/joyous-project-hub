@@ -5,8 +5,7 @@ import { whatsappUrl } from "@/lib/menu";
 import { useAuth, useIsAdmin } from "@/hooks/use-auth";
 import { useCart } from "@/lib/cart";
 import { kitchen } from "@/lib/kitchen-config";
-import logoAsset from "@/assets/rasoori-logo.webp.asset.json";
-import logoAsset2x from "@/assets/rasoori-logo@2x.webp.asset.json";
+import logoUrl from "@/assets/rasoori-logo.webp";
 
 const nav = [
   { label: "Today's Menu", href: "/", hash: "menu" },
@@ -39,8 +38,7 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 md:px-8 md:py-4">
         <Link to="/" className="group -my-2 flex shrink-0 items-center" aria-label={kitchen.brand.fullName}>
           <img
-            src={logoAsset.url}
-            srcSet={`${logoAsset.url} 1x, ${logoAsset2x.url} 2x`}
+            src={logoUrl}
             alt={kitchen.brand.fullName}
             width={72}
             height={72}
