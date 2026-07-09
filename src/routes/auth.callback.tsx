@@ -33,7 +33,9 @@ function AuthCallback() {
           const needsAddress = !meta.address && !meta.landmark;
           window.location.href = needsAddress ? "/account/complete" : "/";
         }
-      } else if (!isRecovery) {
+      } else if (isRecovery) {
+        window.location.href = "/auth";
+      } else {
         window.location.href = "/auth";
       }
     });
