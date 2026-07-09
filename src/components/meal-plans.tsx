@@ -16,6 +16,7 @@ import {
   Soup,
   Wheat,
   ChevronDown,
+  MapPin,
 } from "lucide-react";
 import { whatsappUrl } from "@/lib/menu";
 import { kitchen } from "@/lib/kitchen-config";
@@ -119,13 +120,99 @@ const PLANS: Plan[] = [
   },
 ];
 
-const DELIVERY_TIERS = [
-  { label: "50+ Students", value: "Free Delivery" },
-  { label: "25 – 49 Students", value: "₹150 / month" },
-  { label: "10 – 24 Students", value: "₹250 / month" },
-  { label: "5 – 9 Students", value: "₹350 / month" },
-  { label: "Less than 5 Students", value: "Based on location" },
-];
+type DeliveryItem = { label: string; value: string; highlight?: boolean };
+
+type DeliveryCardProps = {
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  items: DeliveryItem[];
+  description: string;
+  tone: "light" | "dark";
+};
+
+function DeliveryCard({ title, subtitle, icon, items, description, tone }: DeliveryCardProps) {
+  const isDark = tone === "dark";
+  return (
+    <div
+      className={`rounded-3xl border p-7 md:p-8 ${
+        isDark
+          ? "border-ink/10 bg-ink text-cream"
+          : "border-clay/25 bg-gradient-to-br from-clay/8 to-haldi/5"
+      }`}
+    >
+      <div className="flex items-start gap-4">
+        <span
+          className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${
+            isDark
+              ? "bg-haldi/20 text-haldi"
+              : "bg-clay/20 text-clay"
+          }`}
+        >
+          {icon}
+        </span>
+        <div className="min-w-0 flex-1">
+          <span
+            className={`text-[9px] font-bold uppercase tracking-[0.28em] ${
+              isDark ? "text-haldi/80" : "text-clay/70"
+            }`}
+          >
+            {title}
+          </span>
+          <h3
+            className={`mt-1.5 font-serif text-xl leading-tight italic md:text-[1.35rem] ${
+              isDark ? "text-cream" : "text-ink"
+            }`}
+          >
+            {subtitle}
+          </h3>
+        </div>
+      </div>
+
+      <ul className="mt-5 space-y-2.5">
+        {items.map((item) => (
+          <li
+            key={item.label}
+            className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 ${
+              isDark
+                ? "border-cream/10 bg-cream/[0.04]"
+                : "border-clay/15 bg-clay/[0.06]"
+            } ${item.highlight ? (isDark ? "border-haldi/30 bg-haldi/10" : "border-clay/40 bg-clay/15") : ""}`}
+          >
+            <span
+              className={`text-[13px] ${
+                isDark ? "text-cream/80" : "text-ink/75"
+              }`}
+            >
+              {item.label}
+            </span>
+            <span
+              className={`font-serif text-[14px] italic ${
+                isDark
+                  ? item.highlight
+                    ? "text-haldi"
+                    : "text-cream/90"
+                  : item.highlight
+                    ? "text-clay"
+                    : "text-ink"
+              }`}
+            >
+              {item.value}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      <p
+        className={`mt-5 text-[12.5px] leading-relaxed ${
+          isDark ? "text-cream/65" : "text-ink/70"
+        }`}
+      >
+        {description}
+      </p>
+    </div>
+  );
+}
 
 export function MealPlansSection() {
   return (
@@ -154,37 +241,36 @@ export function MealPlansSection() {
           ))}
         </div>
 
-        {/* Delivery info box */}
-        <div className="mt-14 overflow-hidden rounded-3xl border border-ink/10 bg-ink text-cream shadow-[0_30px_60px_-40px_rgba(30,20,15,0.4)]">
-          <div className="grid gap-8 p-7 md:grid-cols-[auto_1fr] md:items-start md:gap-10 md:p-10">
-            <div className="flex items-start gap-4">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-haldi/20 text-haldi">
-                <Truck className="h-5 w-5" strokeWidth={1.5} />
-              </span>
-              <div className="min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-haldi/80">
-                  Delivery Charges
-                </span>
-                <h3 className="mt-1.5 font-serif text-2xl italic text-cream md:text-[1.75rem]">
-                  Cheaper together.
-                </h3>
-                <p className="mt-2 max-w-xs text-[13px] leading-relaxed text-cream/65">
-                  Charges depend on how many friends in your hostel or college subscribe with you.
-                </p>
-              </div>
-            </div>
-            <ul className="grid gap-2 sm:grid-cols-2 md:gap-2.5">
-              {DELIVERY_TIERS.map((tier) => (
-                <li
-                  key={tier.label}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-cream/10 bg-cream/[0.04] px-4 py-3"
-                >
-                  <span className="text-[12.5px] text-cream/80">{tier.label}</span>
-                  <span className="font-serif text-[14px] italic text-haldi">{tier.value}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+        {/* Delivery options */}
+        <div className="mt-14 grid gap-6 md:grid-cols-2 lg:gap-8">
+          {/* Student Subscription Delivery */}
+          <DeliveryCard
+            title="Group Subscriptions"
+            subtitle="Subscribe together, save more"
+            icon={<Truck className="h-6 w-6" strokeWidth={1.5} />}
+            items={[
+              { label: "50+ Students", value: "Free Delivery", highlight: true },
+              { label: "25 – 49 Students", value: "₹150/month" },
+              { label: "10 – 24 Students", value: "₹200/month" },
+            ]}
+            description="Perfect for hostels, PGs, and groups. The more students order together, the lower your per-student delivery charge."
+            tone="dark"
+          />
+
+          {/* Personal Delivery */}
+          <DeliveryCard
+            title="Personal Delivery"
+            subtitle="Fresh, homemade food to your doorstep"
+            icon={<MapPin className="h-6 w-6" strokeWidth={1.5} />}
+            items={[
+              { label: "Within 5 km", value: "₹25/order" },
+              { label: "5 – 10 km", value: "₹35/order" },
+              { label: "10 – 15 km", value: "₹45/order" },
+              { label: "Beyond 15 km", value: "Custom charge" },
+            ]}
+            description="One-time or regular orders. Delivery charges added at checkout. Free delivery on orders above ₹300."
+            tone="light"
+          />
         </div>
 
         {/* Weekly menu */}
