@@ -11,7 +11,7 @@ function isSafePath(p: unknown): p is string {
   return typeof p === "string" && p.startsWith("/") && !p.startsWith("//");
 }
 
-type Screen = "landing" | "email" | "phone" | "phone-verify" | "signin";
+type Screen = "landing" | "email" | "phone" | "phone-verify" | "signin" | "forgot-password";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): AuthSearch => ({
@@ -112,6 +112,19 @@ function AuthPage() {
     navigate({ to: "/account/complete" });
   }
 
+  async function handleForgotPassword(e: FormEvent) {
+    e.preventDefault();
+    if (!email.trim()) return toast.error("Enter your email address");
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: window.location.origin + "/auth/reset-password",
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Check your email for the reset link.");
+    setScreen("signin");
+  }
+
   async function handleGoogle() {
     setBusy(true);
     const { error } = await supabase.auth.signInWithOAuth({
@@ -137,7 +150,9 @@ function AuthPage() {
   }
 
   function back() {
-    setScreen(screen === "phone-verify" ? "phone" : "landing");
+    if (screen === "phone-verify") setScreen("phone");
+    else if (screen === "forgot-password") setScreen("signin");
+    else setScreen("landing");
   }
 
   return (
@@ -394,9 +409,16 @@ function AuthPage() {
                     className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
                   />
                   <button
+                    type="button"
+                    onClick={() => setScreen("forgot-password")}
+                    className="justify-self-start text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground hover:text-clay"
+                  >
+                    Forgot password?
+                  </button>
+                  <button
                     type="submit"
                     disabled={busy}
-                    className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-cream transition-all hover:-translate-y-0.5 hover:bg-clay disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-cream transition-all hover:-translate-y-0.5 hover:bg-clay disabled:opacity-60"
                   >
                     {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                     Sign in
@@ -405,11 +427,51 @@ function AuthPage() {
 
                 <button
                   type="button"
+                  onClick={() => setScreen("phone")}
+                  className="mt-4 text-center text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground hover:text-clay"
+                >
+                  Sign in with phone →
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setScreen("landing")}
-                  className="mt-6 text-center text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground hover:text-clay"
+                  className="mt-4 text-center text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground hover:text-clay"
                 >
                   Need an account? Sign up
                 </button>
+              </>
+            )}
+
+            {screen === "forgot-password" && (
+              <>
+                <h1 className="mt-6 font-serif text-3xl leading-[1.05] text-ink">
+                  Reset your <span className="italic text-clay">password</span>
+                </h1>
+
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Enter your email and we'll send you a reset link.
+                </p>
+
+                <form onSubmit={handleForgotPassword} className="mt-6 grid gap-3">
+                  <input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
+                  />
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-cream transition-all hover:-translate-y-0.5 hover:bg-clay disabled:opacity-60"
+                  >
+                    {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    Send reset link
+                  </button>
+                </form>
               </>
             )}
           </>
