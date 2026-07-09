@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, Clock, MapPin, Plus, Search, Sparkles, X } from "lucide-react";
@@ -7,12 +7,15 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { WhatsAppFab } from "@/components/whatsapp-fab";
 import { useReveal } from "@/hooks/use-reveal";
+import { useAuth } from "@/hooks/use-auth";
 import { whatsappUrl, type Dish } from "@/lib/menu";
 import { kitchen } from "@/lib/kitchen-config";
 import { menuQueryOptions, weeklyMenuQueryOptions } from "@/lib/queries";
 import { useCart } from "@/lib/cart";
 import { MealPlansSection } from "@/components/meal-plans";
+import { fetchProfile } from "@/lib/profile";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => {
@@ -21,7 +24,6 @@ export const Route = createFileRoute("/")({
   },
   component: Home,
 });
-
 
 function useTodayLabel() {
   const [label, setLabel] = useState<string>("Today");
@@ -39,13 +41,16 @@ function useTodayLabel() {
 
 /* ---------- shared bits ---------- */
 
-function Eyebrow({ children, tone = "clay" }: { children: React.ReactNode; tone?: "clay" | "haldi" | "cream" }) {
-  const color =
-    tone === "haldi" ? "text-haldi" : tone === "cream" ? "text-cream/70" : "text-clay";
+function Eyebrow({
+  children,
+  tone = "clay",
+}: {
+  children: React.ReactNode;
+  tone?: "clay" | "haldi" | "cream";
+}) {
+  const color = tone === "haldi" ? "text-haldi" : tone === "cream" ? "text-cream/70" : "text-clay";
   return (
-    <span className={`text-[10px] font-bold uppercase tracking-[0.28em] ${color}`}>
-      {children}
-    </span>
+    <span className={`text-[10px] font-bold uppercase tracking-[0.28em] ${color}`}>{children}</span>
   );
 }
 
@@ -129,9 +134,30 @@ type MealFilter = "all" | "Lunch" | "Dinner" | "Snack";
 function Menu() {
   const { data: dishes = [], isLoading } = useQuery(menuQueryOptions);
   const { add, openCart } = useCart();
+  const { user, ready } = useAuth();
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [meal, setMeal] = useState<MealFilter>("all");
   const [spice, setSpice] = useState<SpiceFilter>("all");
+
+  // After sign-in, check for pending order stored in localStorage
+  useEffect(() => {
+    if (!ready || !user) return;
+    const raw = localStorage.getItem("pendingOrder");
+    if (!raw) return;
+    localStorage.removeItem("pendingOrder");
+    try {
+      const order = JSON.parse(raw);
+      if (order.action === "add-to-cart") {
+        add(order.dish);
+        openCart();
+      } else if (order.action === "open-cart") {
+        openCart();
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, [ready, user, add, openCart]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -226,7 +252,9 @@ function Menu() {
       {/* Compact 2-col grid on mobile, roomier on desktop */}
       <div className="mx-auto max-w-6xl px-5 pb-20 pt-8 md:px-8 md:pb-28 md:pt-10">
         {isLoading && dishes.length === 0 ? (
-          <div className="py-16 text-center text-sm text-muted-foreground">Loading today's menu…</div>
+          <div className="py-16 text-center text-sm text-muted-foreground">
+            Loading today's menu…
+          </div>
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center">
             <p className="text-sm text-muted-foreground">No dishes match your search.</p>
@@ -249,9 +277,62 @@ function Menu() {
                 index={i}
                 spice={SPICE_BY_KEY[dish.key] ?? 1}
                 onOrder={() => {
+                  if (!user) {
+                    localStorage.setItem(
+                      "pendingOrder",
+                      JSON.stringify({
+                        dish: {
+                          key: dish.key,
+                          name: dish.name,
+                          price: dish.price,
+                          meal: dish.meal,
+                          image: dish.image,
+                        },
+                        action: "add-to-cart",
+                      }),
+                    );
+                    navigate({ to: "/auth" });
+                    return;
+                  }
                   add(dish);
                   toast.success(`Added ${dish.name}`);
                   openCart();
+                }}
+                onOrderNow={() => {
+                  if (!user) {
+                    localStorage.setItem(
+                      "pendingOrder",
+                      JSON.stringify({
+                        dish: {
+                          key: dish.key,
+                          name: dish.name,
+                          price: dish.price,
+                          meal: dish.meal,
+                          image: dish.image,
+                        },
+                        action: "order-now",
+                      }),
+                    );
+                    navigate({ to: "/auth" });
+                    return;
+                  }
+                  // Signed-in user: open WhatsApp directly
+                  fetchProfile(user.id).then((p) => {
+                    const name = p?.name || user.email || "";
+                    const phone = p?.phone || "";
+                    const address = p?.address || "";
+                    const landmark = p?.landmark || "";
+                    const lines = [
+                      `Order from ${kitchen.brand.name}`,
+                      `1 × ${dish.name} — ${kitchen.currencySymbol}${dish.price}`,
+                      `Name: ${name}`,
+                      `Phone: ${phone}`,
+                      `Address: ${address}${landmark ? ` · ${landmark}` : ""}`,
+                    ]
+                      .filter(Boolean)
+                      .join("\n");
+                    window.open(whatsappUrl(lines), "_blank", "noopener,noreferrer");
+                  });
                 }}
               />
             ))}
@@ -302,11 +383,13 @@ function MenuCard({
   index,
   spice,
   onOrder,
+  onOrderNow,
 }: {
   dish: Dish;
   index: number;
   spice: 1 | 2 | 3;
   onOrder: () => void;
+  onOrderNow: () => void;
 }) {
   const { ref, shown } = useReveal<HTMLElement>();
   return (
@@ -371,7 +454,9 @@ function MenuCard({
             className="flex-1 translate-y-[-3px] border-b border-dotted border-ink/25"
           />
           <span className="font-serif text-base text-ink tabular md:text-lg">
-            <span className="text-[10px] align-top text-muted-foreground">{kitchen.currencySymbol}</span>
+            <span className="text-[10px] align-top text-muted-foreground">
+              {kitchen.currencySymbol}
+            </span>
             {dish.price}
           </span>
         </div>
@@ -380,28 +465,38 @@ function MenuCard({
           {dish.desc}
         </p>
 
-        <div className="mt-3">
+        <div className="mt-3 flex items-center gap-3">
           {dish.soldOut ? (
             <span className="text-[9px] font-bold uppercase tracking-[0.22em] text-muted-foreground/70">
               Back tomorrow
             </span>
           ) : (
-            <button
-              type="button"
-              onClick={onOrder}
-              className="group/btn inline-flex items-center gap-1.5 border-b border-ink pb-0.5 text-[10px] font-bold uppercase tracking-[0.22em] text-ink transition-colors hover:border-clay hover:text-clay"
-            >
-              <Plus className="h-3 w-3" />
-              Add to order
-              <ArrowUpRight className="h-3 w-3 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={onOrder}
+                className="group/btn inline-flex items-center gap-1.5 border-b border-ink pb-0.5 text-[10px] font-bold uppercase tracking-[0.22em] text-ink transition-colors hover:border-clay hover:text-clay"
+              >
+                <Plus className="h-3 w-3" />
+                Add to order
+                <ArrowUpRight className="h-3 w-3 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
+              </button>
+              <span className="text-[9px] text-muted-foreground/40">|</span>
+              <button
+                type="button"
+                onClick={onOrderNow}
+                className="group/btn inline-flex items-center gap-1 border-b border-leaf/50 pb-0.5 text-[10px] font-bold uppercase tracking-[0.22em] text-leaf transition-colors hover:border-leaf"
+              >
+                Order Now
+                <ArrowUpRight className="h-3 w-3 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
+              </button>
+            </>
           )}
         </div>
       </div>
     </article>
   );
 }
-
 
 /* ---------- COOK NOTE ---------- */
 
@@ -481,7 +576,10 @@ function HowItWorks() {
   ];
 
   return (
-    <section id="how" className="relative overflow-hidden border-t border-border/70 bg-ink text-cream">
+    <section
+      id="how"
+      className="relative overflow-hidden border-t border-border/70 bg-ink text-cream"
+    >
       {/* warm ink canvas */}
       <div
         aria-hidden
@@ -573,7 +671,9 @@ function HowItWorks() {
               <p className="mt-1 text-[11px] leading-relaxed text-cream/70 md:text-[12px]">
                 {s.subtitle}
               </p>
-              <p className="mt-2 text-[12.5px] leading-relaxed text-cream/60 md:text-[13px]">{s.body}</p>
+              <p className="mt-2 text-[12.5px] leading-relaxed text-cream/60 md:text-[13px]">
+                {s.body}
+              </p>
             </div>
           ))}
         </div>
@@ -588,8 +688,26 @@ function OrderArt() {
   return (
     <svg viewBox="0 0 220 140" className="h-full w-full" fill="none" aria-hidden>
       {/* Phone body */}
-      <rect x="50" y="22" width="68" height="110" rx="6" fill="color-mix(in oklab, var(--cream) 20%, transparent)" stroke="color-mix(in oklab, var(--haldi) 70%, transparent)" strokeWidth="1.2" />
-      <rect x="52" y="24" width="64" height="106" rx="5" fill="color-mix(in oklab, var(--cream) 95%, transparent)" stroke="color-mix(in oklab, var(--cream) 60%, transparent)" strokeWidth="0.8" />
+      <rect
+        x="50"
+        y="22"
+        width="68"
+        height="110"
+        rx="6"
+        fill="color-mix(in oklab, var(--cream) 20%, transparent)"
+        stroke="color-mix(in oklab, var(--haldi) 70%, transparent)"
+        strokeWidth="1.2"
+      />
+      <rect
+        x="52"
+        y="24"
+        width="64"
+        height="106"
+        rx="5"
+        fill="color-mix(in oklab, var(--cream) 95%, transparent)"
+        stroke="color-mix(in oklab, var(--cream) 60%, transparent)"
+        strokeWidth="0.8"
+      />
 
       {/* Notch */}
       <rect x="75" y="24" width="18" height="5" rx="2" fill="var(--ink)" />
@@ -597,29 +715,103 @@ function OrderArt() {
       {/* Menu items on screen */}
       <g>
         {/* Item 1 */}
-        <circle cx="60" cy="42" r="4.5" fill="color-mix(in oklab, var(--haldi) 65%, transparent)" stroke="color-mix(in oklab, var(--haldi) 85%, transparent)" strokeWidth="0.8" />
-        <text x="68" y="45" fontFamily="DM Sans" fontSize="8" fill="var(--ink)" fontWeight="600">Dal Tadka</text>
-        <text x="68" y="54" fontFamily="DM Sans" fontSize="6.5" fill="color-mix(in oklab, var(--ink) 55%, transparent)">₹90</text>
+        <circle
+          cx="60"
+          cy="42"
+          r="4.5"
+          fill="color-mix(in oklab, var(--haldi) 65%, transparent)"
+          stroke="color-mix(in oklab, var(--haldi) 85%, transparent)"
+          strokeWidth="0.8"
+        />
+        <text x="68" y="45" fontFamily="DM Sans" fontSize="8" fill="var(--ink)" fontWeight="600">
+          Dal Tadka
+        </text>
+        <text
+          x="68"
+          y="54"
+          fontFamily="DM Sans"
+          fontSize="6.5"
+          fill="color-mix(in oklab, var(--ink) 55%, transparent)"
+        >
+          ₹90
+        </text>
 
         {/* Item 2 */}
-        <circle cx="60" cy="70" r="4.5" fill="color-mix(in oklab, var(--clay) 55%, transparent)" stroke="color-mix(in oklab, var(--clay) 80%, transparent)" strokeWidth="0.8" />
-        <text x="68" y="73" fontFamily="DM Sans" fontSize="8" fill="var(--ink)" fontWeight="600">Paneer Curry</text>
-        <text x="68" y="82" fontFamily="DM Sans" fontSize="6.5" fill="color-mix(in oklab, var(--ink) 55%, transparent)">₹110</text>
+        <circle
+          cx="60"
+          cy="70"
+          r="4.5"
+          fill="color-mix(in oklab, var(--clay) 55%, transparent)"
+          stroke="color-mix(in oklab, var(--clay) 80%, transparent)"
+          strokeWidth="0.8"
+        />
+        <text x="68" y="73" fontFamily="DM Sans" fontSize="8" fill="var(--ink)" fontWeight="600">
+          Paneer Curry
+        </text>
+        <text
+          x="68"
+          y="82"
+          fontFamily="DM Sans"
+          fontSize="6.5"
+          fill="color-mix(in oklab, var(--ink) 55%, transparent)"
+        >
+          ₹110
+        </text>
 
         {/* Item 3 */}
-        <circle cx="60" cy="98" r="4.5" fill="color-mix(in oklab, var(--leaf) 50%, transparent)" stroke="color-mix(in oklab, var(--leaf) 75%, transparent)" strokeWidth="0.8" />
-        <text x="68" y="101" fontFamily="DM Sans" fontSize="8" fill="var(--ink)" fontWeight="600">Mix Veg</text>
-        <text x="68" y="110" fontFamily="DM Sans" fontSize="6.5" fill="color-mix(in oklab, var(--ink) 55%, transparent)">₹90</text>
+        <circle
+          cx="60"
+          cy="98"
+          r="4.5"
+          fill="color-mix(in oklab, var(--leaf) 50%, transparent)"
+          stroke="color-mix(in oklab, var(--leaf) 75%, transparent)"
+          strokeWidth="0.8"
+        />
+        <text x="68" y="101" fontFamily="DM Sans" fontSize="8" fill="var(--ink)" fontWeight="600">
+          Mix Veg
+        </text>
+        <text
+          x="68"
+          y="110"
+          fontFamily="DM Sans"
+          fontSize="6.5"
+          fill="color-mix(in oklab, var(--ink) 55%, transparent)"
+        >
+          ₹90
+        </text>
       </g>
 
       {/* Plus buttons */}
-      <text x="110" y="46" fontFamily="DM Sans" fontSize="14" fill="var(--clay)" fontWeight="bold">+</text>
-      <text x="110" y="74" fontFamily="DM Sans" fontSize="14" fill="var(--clay)" fontWeight="bold">+</text>
-      <text x="110" y="102" fontFamily="DM Sans" fontSize="14" fill="var(--clay)" fontWeight="bold">+</text>
+      <text x="110" y="46" fontFamily="DM Sans" fontSize="14" fill="var(--clay)" fontWeight="bold">
+        +
+      </text>
+      <text x="110" y="74" fontFamily="DM Sans" fontSize="14" fill="var(--clay)" fontWeight="bold">
+        +
+      </text>
+      <text x="110" y="102" fontFamily="DM Sans" fontSize="14" fill="var(--clay)" fontWeight="bold">
+        +
+      </text>
 
       {/* WhatsApp icon bubble */}
-      <circle cx="155" cy="75" r="18" fill="color-mix(in oklab, var(--leaf) 70%, transparent)" stroke="color-mix(in oklab, var(--leaf) 90%, transparent)" strokeWidth="1.2" />
-      <text x="155" y="82" fontFamily="DM Sans" fontSize="16" fill="var(--cream)" fontWeight="bold" textAnchor="middle">✓✓</text>
+      <circle
+        cx="155"
+        cy="75"
+        r="18"
+        fill="color-mix(in oklab, var(--leaf) 70%, transparent)"
+        stroke="color-mix(in oklab, var(--leaf) 90%, transparent)"
+        strokeWidth="1.2"
+      />
+      <text
+        x="155"
+        y="82"
+        fontFamily="DM Sans"
+        fontSize="16"
+        fill="var(--cream)"
+        fontWeight="bold"
+        textAnchor="middle"
+      >
+        ✓✓
+      </text>
     </svg>
   );
 }
@@ -628,11 +820,37 @@ function SubscriptionArt() {
   return (
     <svg viewBox="0 0 220 140" className="h-full w-full" fill="none" aria-hidden>
       {/* Calendar card background */}
-      <rect x="35" y="20" width="90" height="100" rx="4" fill="color-mix(in oklab, var(--cream) 90%, transparent)" stroke="color-mix(in oklab, var(--haldi) 60%, transparent)" strokeWidth="1" />
+      <rect
+        x="35"
+        y="20"
+        width="90"
+        height="100"
+        rx="4"
+        fill="color-mix(in oklab, var(--cream) 90%, transparent)"
+        stroke="color-mix(in oklab, var(--haldi) 60%, transparent)"
+        strokeWidth="1"
+      />
 
       {/* Calendar header */}
-      <rect x="35" y="20" width="90" height="18" rx="4" fill="color-mix(in oklab, var(--haldi) 50%, transparent)" />
-      <text x="80" y="32" fontFamily="Fraunces" fontSize="9" fill="var(--cream)" fontWeight="bold" textAnchor="middle">JUNE 2025</text>
+      <rect
+        x="35"
+        y="20"
+        width="90"
+        height="18"
+        rx="4"
+        fill="color-mix(in oklab, var(--haldi) 50%, transparent)"
+      />
+      <text
+        x="80"
+        y="32"
+        fontFamily="Fraunces"
+        fontSize="9"
+        fill="var(--cream)"
+        fontWeight="bold"
+        textAnchor="middle"
+      >
+        JUNE 2025
+      </text>
 
       {/* Calendar grid */}
       {Array.from({ length: 20 }).map((_, i) => {
@@ -650,7 +868,11 @@ function SubscriptionArt() {
               height="13"
               rx="1.5"
               fill={isFilled ? "color-mix(in oklab, var(--haldi) 35%, transparent)" : "transparent"}
-              stroke={isFilled ? "color-mix(in oklab, var(--haldi) 70%, transparent)" : "color-mix(in oklab, var(--ink) 15%, transparent)"}
+              stroke={
+                isFilled
+                  ? "color-mix(in oklab, var(--haldi) 70%, transparent)"
+                  : "color-mix(in oklab, var(--ink) 15%, transparent)"
+              }
               strokeWidth="0.5"
             />
             <text
@@ -669,13 +891,32 @@ function SubscriptionArt() {
       })}
 
       {/* Checkmark badge */}
-      <circle cx="155" cy="50" r="16" fill="color-mix(in oklab, var(--leaf) 60%, transparent)" stroke="color-mix(in oklab, var(--leaf) 90%, transparent)" strokeWidth="1.2" />
-      <path d="M150 50 L153 53 L160 46" stroke="var(--cream)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle
+        cx="155"
+        cy="50"
+        r="16"
+        fill="color-mix(in oklab, var(--leaf) 60%, transparent)"
+        stroke="color-mix(in oklab, var(--leaf) 90%, transparent)"
+        strokeWidth="1.2"
+      />
+      <path
+        d="M150 50 L153 53 L160 46"
+        stroke="var(--cream)"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
 
       {/* Text benefits */}
-      <text x="135" y="75" fontFamily="DM Sans" fontSize="7" fill="var(--ink)" fontWeight="bold">Hassle-Free</text>
-      <text x="135" y="85" fontFamily="DM Sans" fontSize="7" fill="var(--ink)" fontWeight="bold">Homely</text>
-      <text x="135" y="95" fontFamily="DM Sans" fontSize="7" fill="var(--ink)" fontWeight="bold">Affordable</text>
+      <text x="135" y="75" fontFamily="DM Sans" fontSize="7" fill="var(--ink)" fontWeight="bold">
+        Hassle-Free
+      </text>
+      <text x="135" y="85" fontFamily="DM Sans" fontSize="7" fill="var(--ink)" fontWeight="bold">
+        Homely
+      </text>
+      <text x="135" y="95" fontFamily="DM Sans" fontSize="7" fill="var(--ink)" fontWeight="bold">
+        Affordable
+      </text>
     </svg>
   );
 }
@@ -685,22 +926,83 @@ function PreorderArt() {
     <svg viewBox="0 0 220 140" className="h-full w-full" fill="none" aria-hidden>
       {/* Decorative circles as food */}
       {/* Thali bowl */}
-      <circle cx="80" cy="70" r="35" fill="color-mix(in oklab, var(--cream) 85%, transparent)" stroke="color-mix(in oklab, var(--haldi) 70%, transparent)" strokeWidth="2" />
-      <circle cx="80" cy="70" r="30" fill="color-mix(in oklab, var(--haldi) 30%, transparent)" stroke="color-mix(in oklab, var(--haldi) 65%, transparent)" strokeWidth="1" />
+      <circle
+        cx="80"
+        cy="70"
+        r="35"
+        fill="color-mix(in oklab, var(--cream) 85%, transparent)"
+        stroke="color-mix(in oklab, var(--haldi) 70%, transparent)"
+        strokeWidth="2"
+      />
+      <circle
+        cx="80"
+        cy="70"
+        r="30"
+        fill="color-mix(in oklab, var(--haldi) 30%, transparent)"
+        stroke="color-mix(in oklab, var(--haldi) 65%, transparent)"
+        strokeWidth="1"
+      />
 
       {/* Food items on thali */}
-      <circle cx="65" cy="55" r="6" fill="color-mix(in oklab, var(--clay) 70%, transparent)" stroke="color-mix(in oklab, var(--clay) 90%, transparent)" strokeWidth="0.8" />
-      <circle cx="95" cy="55" r="6" fill="color-mix(in oklab, var(--haldi) 70%, transparent)" stroke="color-mix(in oklab, var(--haldi) 90%, transparent)" strokeWidth="0.8" />
-      <circle cx="80" cy="80" r="6" fill="color-mix(in oklab, var(--leaf) 60%, transparent)" stroke="color-mix(in oklab, var(--leaf) 85%, transparent)" strokeWidth="0.8" />
+      <circle
+        cx="65"
+        cy="55"
+        r="6"
+        fill="color-mix(in oklab, var(--clay) 70%, transparent)"
+        stroke="color-mix(in oklab, var(--clay) 90%, transparent)"
+        strokeWidth="0.8"
+      />
+      <circle
+        cx="95"
+        cy="55"
+        r="6"
+        fill="color-mix(in oklab, var(--haldi) 70%, transparent)"
+        stroke="color-mix(in oklab, var(--haldi) 90%, transparent)"
+        strokeWidth="0.8"
+      />
+      <circle
+        cx="80"
+        cy="80"
+        r="6"
+        fill="color-mix(in oklab, var(--leaf) 60%, transparent)"
+        stroke="color-mix(in oklab, var(--leaf) 85%, transparent)"
+        strokeWidth="0.8"
+      />
 
       {/* Roti */}
-      <path d="M60 88 q 15 0 30 0 a15 15 0 0 1 0 8 q -15 0 -30 0 a15 15 0 0 1 0 -8" fill="color-mix(in oklab, var(--haldi) 50%, transparent)" stroke="color-mix(in oklab, var(--haldi) 75%, transparent)" strokeWidth="0.8" />
+      <path
+        d="M60 88 q 15 0 30 0 a15 15 0 0 1 0 8 q -15 0 -30 0 a15 15 0 0 1 0 -8"
+        fill="color-mix(in oklab, var(--haldi) 50%, transparent)"
+        stroke="color-mix(in oklab, var(--haldi) 75%, transparent)"
+        strokeWidth="0.8"
+      />
 
       {/* Package/gift box */}
       <g transform="translate(155, 70)">
-        <rect x="-12" y="-12" width="24" height="24" rx="2" fill="color-mix(in oklab, var(--clay) 35%, transparent)" stroke="color-mix(in oklab, var(--clay) 80%, transparent)" strokeWidth="1.2" />
-        <rect x="-10" y="-10" width="20" height="20" rx="1" fill="color-mix(in oklab, var(--clay) 50%, transparent)" />
-        <path d="M-10 0 L10 0 M0 -10 L0 10" stroke="color-mix(in oklab, var(--cream) 70%, transparent)" strokeWidth="0.8" strokeLinecap="round" />
+        <rect
+          x="-12"
+          y="-12"
+          width="24"
+          height="24"
+          rx="2"
+          fill="color-mix(in oklab, var(--clay) 35%, transparent)"
+          stroke="color-mix(in oklab, var(--clay) 80%, transparent)"
+          strokeWidth="1.2"
+        />
+        <rect
+          x="-10"
+          y="-10"
+          width="20"
+          height="20"
+          rx="1"
+          fill="color-mix(in oklab, var(--clay) 50%, transparent)"
+        />
+        <path
+          d="M-10 0 L10 0 M0 -10 L0 10"
+          stroke="color-mix(in oklab, var(--cream) 70%, transparent)"
+          strokeWidth="0.8"
+          strokeLinecap="round"
+        />
         {/* Gift bow */}
         <circle cx="0" cy="-10" r="2" fill="var(--haldi)" />
       </g>
@@ -708,16 +1010,29 @@ function PreorderArt() {
       {/* Party balloons */}
       <g transform="translate(145, 35)">
         <circle cx="0" cy="0" r="4" fill="color-mix(in oklab, var(--clay) 80%, transparent)" />
-        <line x1="0" y1="4" x2="0" y2="12" stroke="color-mix(in oklab, var(--cream) 60%, transparent)" strokeWidth="0.6" />
+        <line
+          x1="0"
+          y1="4"
+          x2="0"
+          y2="12"
+          stroke="color-mix(in oklab, var(--cream) 60%, transparent)"
+          strokeWidth="0.6"
+        />
       </g>
       <g transform="translate(165, 40)">
         <circle cx="0" cy="0" r="4" fill="color-mix(in oklab, var(--haldi) 80%, transparent)" />
-        <line x1="0" y1="4" x2="0" y2="12" stroke="color-mix(in oklab, var(--cream) 60%, transparent)" strokeWidth="0.6" />
+        <line
+          x1="0"
+          y1="4"
+          x2="0"
+          y2="12"
+          stroke="color-mix(in oklab, var(--cream) 60%, transparent)"
+          strokeWidth="0.6"
+        />
       </g>
     </svg>
   );
 }
-
 
 /* ---------- KITCHENS ---------- */
 

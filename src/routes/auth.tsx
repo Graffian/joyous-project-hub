@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent } from "react";
-import { Loader2 } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { kitchen } from "@/lib/kitchen-config";
@@ -10,6 +10,8 @@ type AuthSearch = { next?: string };
 function isSafePath(p: unknown): p is string {
   return typeof p === "string" && p.startsWith("/") && !p.startsWith("//");
 }
+
+type Screen = "landing" | "email" | "phone" | "phone-verify" | "signin";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): AuthSearch => ({
@@ -29,10 +31,18 @@ function AuthPage() {
   const { next } = Route.useSearch();
   const dest = next ?? "/account";
 
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [screen, setScreen] = useState<Screen>("landing");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [landmark, setLandmark] = useState("");
   const [busy, setBusy] = useState(false);
+  const [phoneToken, setPhoneToken] = useState("");
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
+
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -40,116 +50,370 @@ function AuthPage() {
     });
   }, [navigate, dest]);
 
-  async function onSubmit(e: FormEvent) {
+  async function handleEmailSignup(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
-    if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: window.location.origin + dest },
-      });
-      setBusy(false);
-      if (error) return toast.error(error.message);
-      toast.success("Check your email to confirm your account.");
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      setBusy(false);
-      if (error) return toast.error(error.message);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name: name.trim() || null,
+          phone: phone.trim() || null,
+          address: address.trim() || null,
+          landmark: landmark.trim() || null,
+        },
+        emailRedirectTo: window.location.origin + "/auth/callback",
+      },
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    if (data.session) {
       navigate({ to: dest });
+    } else {
+      toast.success(
+        "Check your email to confirm your account. Your details will be saved automatically after confirmation.",
+      );
+      setScreen("landing");
     }
   }
 
-  async function google() {
+  async function handleEmailSignin(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    navigate({ to: dest });
+  }
+
+  async function handleSendOtp() {
+    if (!phone.trim()) return toast.error("Enter your phone number");
+    setBusy(true);
+    const { error } = await supabase.auth.signInWithOtp({ phone: phone.trim() });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    setPhoneToken(phone.trim());
+    setOtp(Array(6).fill(""));
+    setScreen("phone-verify");
+  }
+
+  async function handleVerifyOtp() {
+    const token = otp.join("");
+    if (token.length !== 6) return toast.error("Enter the full 6-digit code");
+    setBusy(true);
+    const { error } = await supabase.auth.verifyOtp({
+      phone: phoneToken,
+      token,
+      type: "sms",
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    navigate({ to: "/account/complete" });
+  }
+
+  async function handleGoogle() {
     setBusy(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo:
-          window.location.origin + "/auth" + (next ? `?next=${encodeURIComponent(next)}` : ""),
-      },
+      options: { redirectTo: window.location.origin + "/auth/callback" },
     });
     setBusy(false);
     if (error) toast.error(error.message);
   }
 
+  function handleOtpChange(i: number, val: string) {
+    const digit = val.replace(/\D/g, "").slice(0, 1);
+    const next = [...otp];
+    next[i] = digit;
+    setOtp(next);
+    if (digit && i < 5) otpRefs.current[i + 1]?.focus();
+  }
+
+  function handleOtpKeyDown(i: number, e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Backspace" && !otp[i] && i > 0) {
+      otpRefs.current[i - 1]?.focus();
+    }
+  }
+
+  function back() {
+    setScreen(screen === "phone-verify" ? "phone" : "landing");
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground paper-grain">
       <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-16 md:px-8">
-        <Link
-          to="/"
-          className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground hover:text-clay"
-        >
-          ← Back home
-        </Link>
-        <h1 className="mt-6 font-serif text-4xl leading-[1.05] text-ink">
-          {mode === "signin" ? (
-            <>
-              Sign in to <span className="italic text-clay">{kitchen.brand.name}</span>.
-            </>
-          ) : (
-            <>
+        {screen === "landing" ? (
+          <>
+            <Link
+              to="/"
+              className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground hover:text-clay"
+            >
+              ← Back home
+            </Link>
+
+            <h1 className="mt-6 font-serif text-4xl leading-[1.05] text-ink">
               Create an <span className="italic text-clay">account</span>.
-            </>
-          )}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {next
-            ? "One quick step so we can save your delivery details and order history."
-            : "Sign in to place orders, track your history, or manage the kitchen."}
-        </p>
+            </h1>
 
-        <button
-          type="button"
-          onClick={google}
-          disabled={busy}
-          className="mt-8 inline-flex items-center justify-center gap-3 rounded-full border border-ink/15 bg-background px-5 py-3 text-sm font-medium text-ink transition-all hover:bg-ink/[0.03] disabled:opacity-60"
-        >
-          <GoogleIcon /> Continue with Google
-        </button>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {next
+                ? "One quick step so we can save your delivery details and order history."
+                : "Sign in to place orders, track your history, or manage the kitchen."}
+            </p>
 
-        <div className="my-6 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">
-          <span className="h-px flex-1 bg-border" /> or email{" "}
-          <span className="h-px flex-1 bg-border" />
-        </div>
+            <div className="mt-8 grid gap-3">
+              <button
+                type="button"
+                onClick={handleGoogle}
+                disabled={busy}
+                className="inline-flex items-center justify-center gap-3 rounded-full border border-ink/15 bg-background px-5 py-3 text-sm font-medium text-ink transition-all hover:bg-ink/[0.03] disabled:opacity-60"
+              >
+                <GoogleIcon /> Google
+              </button>
 
-        <form onSubmit={onSubmit} className="grid gap-3">
-          <input
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
-          />
-          <input
-            type="password"
-            required
-            minLength={6}
-            autoComplete={mode === "signup" ? "new-password" : "current-password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password (min 6 chars)"
-            className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
-          />
-          <button
-            type="submit"
-            disabled={busy}
-            className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-cream transition-all hover:-translate-y-0.5 hover:bg-clay disabled:opacity-60"
-          >
-            {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            {mode === "signin" ? "Sign in" : "Create account"}
-          </button>
-        </form>
+              <button
+                type="button"
+                onClick={() => setScreen("email")}
+                className="inline-flex items-center justify-center gap-3 rounded-full border border-ink/15 bg-background px-5 py-3 text-sm font-medium text-ink transition-all hover:bg-ink/[0.03]"
+              >
+                Continue with Email
+              </button>
 
-        <button
-          type="button"
-          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-          className="mt-6 text-center text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground hover:text-clay"
-        >
-          {mode === "signin" ? "Need an account? Sign up" : "Have an account? Sign in"}
-        </button>
+              <button
+                type="button"
+                onClick={() => setScreen("phone")}
+                className="inline-flex items-center justify-center gap-3 rounded-full border border-ink/15 bg-background px-5 py-3 text-sm font-medium text-ink transition-all hover:bg-ink/[0.03]"
+              >
+                Continue with Phone
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setScreen("signin")}
+              className="mt-8 text-center text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground hover:text-clay"
+            >
+              Already have an account? Sign in
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={back}
+              className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground hover:text-clay"
+            >
+              <ArrowLeft className="h-3 w-3" /> All options
+            </button>
+
+            {screen === "email" && (
+              <>
+                <h1 className="mt-6 font-serif text-3xl leading-[1.05] text-ink">
+                  Continue with <span className="italic text-clay">Email</span>
+                </h1>
+
+                <form onSubmit={handleEmailSignup} className="mt-6 grid gap-3">
+                  <input
+                    type="text"
+                    autoComplete="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
+                  />
+                  <input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
+                  />
+                  <input
+                    type="tel"
+                    autoComplete="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="Phone number (e.g. +91...)"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
+                  />
+                  <input
+                    type="text"
+                    autoComplete="street-address"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Delivery address (sector, flat / house)"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
+                  />
+                  <input
+                    type="text"
+                    autoComplete="off"
+                    value={landmark}
+                    onChange={(e) => setLandmark(e.target.value)}
+                    placeholder="Landmark / hostel (e.g. NIT Hostel 7)"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
+                  />
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password (min 6 chars)"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
+                  />
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-cream transition-all hover:-translate-y-0.5 hover:bg-clay disabled:opacity-60"
+                  >
+                    {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    Create account
+                  </button>
+                </form>
+
+                <button
+                  type="button"
+                  onClick={() => setScreen("signin")}
+                  className="mt-6 text-center text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground hover:text-clay"
+                >
+                  Have an account? Sign in
+                </button>
+              </>
+            )}
+
+            {screen === "phone" && (
+              <>
+                <h1 className="mt-6 font-serif text-3xl leading-[1.05] text-ink">
+                  Continue with <span className="italic text-clay">Phone</span>
+                </h1>
+
+                <p className="mt-2 text-sm text-muted-foreground">
+                  We'll send you a one-time code.
+                </p>
+
+                <div className="mt-6 grid gap-3">
+                  <input
+                    type="tel"
+                    required
+                    autoComplete="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="Phone number (e.g. +91...)"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSendOtp}
+                    disabled={busy}
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-cream transition-all hover:-translate-y-0.5 hover:bg-clay disabled:opacity-60"
+                  >
+                    {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    Send OTP
+                  </button>
+                </div>
+              </>
+            )}
+
+            {screen === "phone-verify" && (
+              <>
+                <h1 className="mt-6 font-serif text-3xl leading-[1.05] text-ink">
+                  Enter the <span className="italic text-clay">code</span>
+                </h1>
+
+                <p className="mt-2 text-sm text-muted-foreground">
+                  We sent a 6-digit code to <strong>{phoneToken}</strong>.
+                </p>
+
+                <div className="mt-8 flex justify-center gap-2">
+                  {Array.from({ length: 6 }, (_, i) => (
+                    <input
+                      key={i}
+                      ref={(el) => {
+                        otpRefs.current[i] = el;
+                      }}
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={1}
+                      value={otp[i]}
+                      onChange={(e) => handleOtpChange(i, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                      className="h-12 w-10 rounded-lg border border-input bg-background text-center text-lg font-bold outline-none focus:border-clay focus:ring-1 focus:ring-clay"
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleVerifyOtp}
+                  disabled={busy || otp.join("").length !== 6}
+                  className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-cream transition-all hover:-translate-y-0.5 hover:bg-clay disabled:opacity-60"
+                >
+                  {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  Verify
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSendOtp}
+                  disabled={busy}
+                  className="mt-4 text-center text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground hover:text-clay"
+                >
+                  Resend code
+                </button>
+              </>
+            )}
+
+            {screen === "signin" && (
+              <>
+                <h1 className="mt-6 font-serif text-3xl leading-[1.05] text-ink">
+                  Sign <span className="italic text-clay">in</span>
+                </h1>
+
+                <form onSubmit={handleEmailSignin} className="mt-6 grid gap-3">
+                  <input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
+                  />
+                  <input
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
+                  />
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-cream transition-all hover:-translate-y-0.5 hover:bg-clay disabled:opacity-60"
+                  >
+                    {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    Sign in
+                  </button>
+                </form>
+
+                <button
+                  type="button"
+                  onClick={() => setScreen("landing")}
+                  className="mt-6 text-center text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground hover:text-clay"
+                >
+                  Need an account? Sign up
+                </button>
+              </>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

@@ -52,13 +52,14 @@ export function SiteHeader() {
         <nav className="hidden items-center gap-9 md:flex">
           {nav.map((n) =>
             n.hash ? (
-              <a
+              <Link
                 key={n.label}
-                href={`#${n.hash}`}
+                to="/"
+                hash={n.hash}
                 className="text-[11px] font-bold uppercase tracking-[0.22em] text-foreground/70 transition-colors hover:text-clay"
               >
                 {n.label}
-              </a>
+              </Link>
             ) : (
               <Link
                 key={n.label}
@@ -115,14 +116,15 @@ export function SiteHeader() {
           <div className="mx-auto flex max-w-6xl flex-col gap-1 px-5 py-4">
             {nav.map((n) =>
               n.hash ? (
-                <a
+                <Link
                   key={n.label}
-                  href={`#${n.hash}`}
+                  to="/"
+                  hash={n.hash}
                   onClick={() => setOpen(false)}
                   className="rounded-md px-2 py-2.5 text-sm text-foreground"
                 >
                   {n.label}
-                </a>
+                </Link>
               ) : (
                 <Link
                   key={n.label}
