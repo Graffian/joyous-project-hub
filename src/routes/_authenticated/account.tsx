@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { Loader2, LogOut, User as UserIcon } from "lucide-react";
+import { Loader2, LogOut, User as UserIcon, Edit2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,6 +55,7 @@ function AccountPage() {
     landmark: "",
   });
   const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (profileQuery.data) setForm({ ...profileQuery.data });
@@ -75,11 +76,17 @@ function AccountPage() {
       });
       qc.invalidateQueries({ queryKey: ["profile", user.id] });
       toast.success("Details saved");
+      setIsEditing(false);
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
       setSaving(false);
     }
+  }
+
+  function cancel() {
+    if (profileQuery.data) setForm({ ...profileQuery.data });
+    setIsEditing(false);
   }
 
   async function signOut() {
@@ -88,6 +95,8 @@ function AccountPage() {
     await supabase.auth.signOut();
     navigate({ to: "/", replace: true });
   }
+
+  const hasProfile = !!(form.name || form.phone || form.address || form.landmark);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -123,52 +132,87 @@ function AccountPage() {
       </section>
 
       <section className="mx-auto grid max-w-4xl gap-10 px-5 py-12 md:grid-cols-5 md:px-8">
-        <form
-          onSubmit={save}
-          className="md:col-span-2 rounded-2xl border border-border bg-card p-6"
-        >
-          <div className="mb-4 flex items-center gap-2">
-            <UserIcon className="h-4 w-4 text-clay" />
-            <h2 className="font-serif text-xl text-ink">Delivery details</h2>
+        <div className="md:col-span-2 rounded-2xl border border-border bg-card p-6">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <UserIcon className="h-4 w-4 text-clay" />
+              <h2 className="font-serif text-xl text-ink">Delivery details</h2>
+            </div>
+            {hasProfile && !isEditing && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="inline-flex items-center gap-2 rounded-full bg-ink/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-clay hover:bg-ink/10"
+              >
+                <Edit2 className="h-3 w-3" />
+                Edit
+              </button>
+            )}
           </div>
-          <p className="text-xs text-muted-foreground">
-            We'll autofill these on your next order.
-          </p>
-          <div className="mt-5 grid gap-4">
-            <Field
-              label="Name"
-              value={form.name ?? ""}
-              onChange={(v) => setForm({ ...form, name: v })}
-            />
-            <Field
-              label="Phone"
-              type="tel"
-              value={form.phone ?? ""}
-              onChange={(v) => setForm({ ...form, phone: v })}
-              placeholder="+91"
-            />
-            <Field
-              label="Delivery address"
-              value={form.address ?? ""}
-              onChange={(v) => setForm({ ...form, address: v })}
-              placeholder="Sector, flat / house"
-            />
-            <Field
-              label="Hostel / landmark"
-              value={form.landmark ?? ""}
-              onChange={(v) => setForm({ ...form, landmark: v })}
-              placeholder="e.g. NIT Hostel 7"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={saving}
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.22em] text-cream hover:bg-clay disabled:opacity-60"
-          >
-            {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            Save details
-          </button>
-        </form>
+
+          {!isEditing && hasProfile ? (
+            <div className="space-y-4">
+              <p className="text-xs text-muted-foreground mb-4">
+                We'll autofill these on your next order.
+              </p>
+              <DisplayField label="Name" value={form.name} />
+              <DisplayField label="Phone" value={form.phone} />
+              <DisplayField label="Delivery address" value={form.address} />
+              <DisplayField label="Hostel / landmark" value={form.landmark} />
+            </div>
+          ) : (
+            <form onSubmit={save} className="space-y-0">
+              <p className="text-xs text-muted-foreground mb-5">
+                We'll autofill these on your next order.
+              </p>
+              <div className="grid gap-4">
+                <Field
+                  label="Name"
+                  value={form.name ?? ""}
+                  onChange={(v) => setForm({ ...form, name: v })}
+                />
+                <Field
+                  label="Phone"
+                  type="tel"
+                  value={form.phone ?? ""}
+                  onChange={(v) => setForm({ ...form, phone: v })}
+                  placeholder="+91"
+                />
+                <Field
+                  label="Delivery address"
+                  value={form.address ?? ""}
+                  onChange={(v) => setForm({ ...form, address: v })}
+                  placeholder="Sector, flat / house"
+                />
+                <Field
+                  label="Hostel / landmark"
+                  value={form.landmark ?? ""}
+                  onChange={(v) => setForm({ ...form, landmark: v })}
+                  placeholder="e.g. NIT Hostel 7"
+                />
+              </div>
+              <div className="mt-6 flex gap-2">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.22em] text-cream hover:bg-clay disabled:opacity-60"
+                >
+                  {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  Save details
+                </button>
+                {hasProfile && (
+                  <button
+                    type="button"
+                    onClick={cancel}
+                    className="inline-flex items-center gap-2 rounded-full border border-ink/15 px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.22em] text-ink hover:bg-ink/5"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
+        </div>
 
         <div className="md:col-span-3">
           <h2 className="font-serif text-xl text-ink">Order history</h2>
@@ -215,6 +259,19 @@ function AccountPage() {
       </section>
 
       <SiteFooter />
+    </div>
+  );
+}
+
+function DisplayField({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div>
+      <label className="block text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
+        {label}
+      </label>
+      <p className="mt-2 text-sm text-ink">
+        {value || <span className="text-muted-foreground italic">Not provided</span>}
+      </p>
     </div>
   );
 }
