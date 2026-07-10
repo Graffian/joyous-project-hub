@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as KitchensApplyRouteImport } from './routes/kitchens.apply'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
@@ -48,6 +49,11 @@ const KitchensApplyRoute = KitchensApplyRouteImport.update({
   id: '/kitchens/apply',
   path: '/kitchens/apply',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/callback',
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AuthenticatedAccountRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/kitchens/apply': typeof KitchensApplyRoute
   '/account/complete': typeof AuthenticatedAccountCompleteRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRouteWithChildren
   '/account': typeof AuthenticatedAccountRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/kitchens/apply': typeof KitchensApplyRoute
   '/account/complete': typeof AuthenticatedAccountCompleteRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/_authenticated/account': typeof AuthenticatedAccountRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/kitchens/apply': typeof KitchensApplyRoute
   '/_authenticated/account/complete': typeof AuthenticatedAccountCompleteRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/auth/callback'
+    | '/auth/reset-password'
     | '/kitchens/apply'
     | '/account/complete'
     | '/admin/analytics'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/account'
     | '/auth/callback'
+    | '/auth/reset-password'
     | '/kitchens/apply'
     | '/account/complete'
     | '/admin/analytics'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/_authenticated/account'
     | '/_authenticated/admin'
     | '/auth/callback'
+    | '/auth/reset-password'
     | '/kitchens/apply'
     | '/_authenticated/account/complete'
     | '/_authenticated/admin/analytics'
@@ -249,6 +261,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/kitchens/apply'
       preLoaderRoute: typeof KitchensApplyRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/auth/callback': {
       id: '/auth/callback'
@@ -370,10 +389,12 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface AuthRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
