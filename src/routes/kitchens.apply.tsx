@@ -39,7 +39,8 @@ const applicationSchema = z.object({
 function ApplyPage() {
   const { user, ready } = useAuth();
   const navigate = useNavigate();
-  const currentPath = useRouterState({ select: (s) => s.location.pathname + s.location.search });
+  const routerState = useRouterState();
+  const currentPath = (routerState.location.pathname || "") + (routerState.location.search || "");
 
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
