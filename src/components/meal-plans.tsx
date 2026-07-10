@@ -384,14 +384,14 @@ function WeeklyMenu() {
   return (
     <div className="mt-24">
       <div className="text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-haldi/40 bg-haldi/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24em] text-ink">
+        <span className="inline-flex items-center gap-2 rounded-full border border-haldi/40 bg-haldi/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.24em] text-ink">
           <Sparkles className="h-3 w-3" /> A Sample Week
         </span>
-        <h3 className="mt-4 font-serif text-[1.75rem] leading-[1.05] tracking-tight text-ink md:text-[2.4rem]">
+        <h3 className="mt-4 font-serif text-2xl leading-[1.05] tracking-tight text-ink md:text-4xl">
           A different plate,
           <span className="italic text-clay"> every single day.</span>
         </h3>
-        <p className="mx-auto mt-3 max-w-lg text-[13.5px] leading-relaxed text-muted-foreground md:text-[14.5px]">
+        <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground md:text-base">
           Our menu rotates regularly, bringing you fresh homemade dishes through the week. Below is a sample of the kind of meals you can expect.
         </p>
       </div>
@@ -435,16 +435,16 @@ function WeeklyMenu() {
                     </div>
                     <div className="flex min-w-0 flex-1 flex-col justify-center">
                       <div className="flex items-center gap-2">
-                        <span className="text-[9.5px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
+                        <span className="text-xs font-bold uppercase tracking-[0.22em] text-muted-foreground">
                           Day {day}
                         </span>
                         <span className="h-1 w-1 rounded-full bg-clay/50" />
-                        <span className="font-serif text-[13.5px] italic text-clay">{short}</span>
+                        <span className="font-serif text-sm italic text-clay">{short}</span>
                       </div>
-                      <div className="mt-1 truncate font-serif text-[17px] text-ink">
+                      <div className="mt-1 truncate font-serif text-lg text-ink">
                         {DAY_FULL[i]}
                       </div>
-                      <div className="mt-0.5 truncate text-[11.5px] text-muted-foreground">
+                      <div className="mt-0.5 truncate text-xs text-muted-foreground">
                         Lunch · {lunchTitle}
                       </div>
                     </div>
