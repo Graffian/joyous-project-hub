@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as KitchensRouteImport } from './routes/kitchens'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -26,6 +27,11 @@ import { Route as AuthenticatedAdminApplicationsRouteImport } from './routes/_au
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin.analytics'
 import { Route as AuthenticatedAccountCompleteRouteImport } from './routes/_authenticated/account.complete'
 
+const KitchensRoute = KitchensRouteImport.update({
+  id: '/kitchens',
+  path: '/kitchens',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -46,9 +52,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const KitchensApplyRoute = KitchensApplyRouteImport.update({
-  id: '/kitchens/apply',
-  path: '/kitchens/apply',
-  getParentRoute: () => rootRouteImport,
+  id: '/apply',
+  path: '/apply',
+  getParentRoute: () => KitchensRoute,
 } as any)
 const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -115,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRouteWithChildren
+  '/kitchens': typeof KitchensRouteWithChildren
   '/account': typeof AuthenticatedAccountRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRouteWithChildren
+  '/kitchens': typeof KitchensRouteWithChildren
   '/account': typeof AuthenticatedAccountRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/auth': typeof AuthRouteWithChildren
+  '/kitchens': typeof KitchensRouteWithChildren
   '/_authenticated/account': typeof AuthenticatedAccountRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
@@ -169,6 +178,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/kitchens'
     | '/account'
     | '/admin'
     | '/auth/callback'
@@ -186,6 +196,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/kitchens'
     | '/account'
     | '/auth/callback'
     | '/auth/reset-password'
@@ -203,6 +214,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/about'
     | '/auth'
+    | '/kitchens'
     | '/_authenticated/account'
     | '/_authenticated/admin'
     | '/auth/callback'
@@ -222,11 +234,18 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRouteWithChildren
-  KitchensApplyRoute: typeof KitchensApplyRoute
+  KitchensRoute: typeof KitchensRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/kitchens': {
+      id: '/kitchens'
+      path: '/kitchens'
+      fullPath: '/kitchens'
+      preLoaderRoute: typeof KitchensRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -257,10 +276,10 @@ declare module '@tanstack/react-router' {
     }
     '/kitchens/apply': {
       id: '/kitchens/apply'
-      path: '/kitchens/apply'
+      path: '/apply'
       fullPath: '/kitchens/apply'
       preLoaderRoute: typeof KitchensApplyRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof KitchensRoute
     }
     '/auth/reset-password': {
       id: '/auth/reset-password'
@@ -399,12 +418,24 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface KitchensRouteChildren {
+  KitchensApplyRoute: typeof KitchensApplyRoute
+}
+
+const KitchensRouteChildren: KitchensRouteChildren = {
+  KitchensApplyRoute: KitchensApplyRoute,
+}
+
+const KitchensRouteWithChildren = KitchensRoute._addFileChildren(
+  KitchensRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRouteWithChildren,
-  KitchensApplyRoute: KitchensApplyRoute,
+  KitchensRoute: KitchensRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

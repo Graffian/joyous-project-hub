@@ -555,7 +555,7 @@ function HowItWorks() {
       subtitle: "Pick your favorite dishes",
       body: "Choose from today's menu and place your order on WhatsApp. Share your address and preferred delivery time.",
       badge: "Menu",
-      illustration: <OrderArt />,
+      illustration: <img src="https://cdn.builder.io/api/v1/image/assets%2Fb6f63f89f0bf46719a1ff392c832e54e%2F342a4a0ddce743f4a71bf50b5963b209?format=webp&width=800&height=1200" alt="Order individually" className="h-full w-full object-cover" />,
     },
     {
       k: "02",
@@ -563,7 +563,7 @@ function HowItWorks() {
       subtitle: "For students, bachelors, or anyone",
       body: "Subscribe for daily homemade meals. Healthy, balanced, and delivered on time—perfect for hostels and PGs.",
       badge: "Plans",
-      illustration: <SubscriptionArt />,
+      illustration: <img src="https://cdn.builder.io/api/v1/image/assets%2Fb6f63f89f0bf46719a1ff392c832e54e%2F7159bf1ce28d4cccb7b92d4a9ec4d442?format=webp&width=800&height=1200" alt="Subscription plan" className="h-full w-full object-cover" />,
     },
     {
       k: "03",
@@ -571,7 +571,7 @@ function HowItWorks() {
       subtitle: "Plan ahead for functions",
       body: "Book meals in advance for birthdays, meetings, or gatherings. We prepare fresh, deliver hot, and handle the food.",
       badge: "Events",
-      illustration: <PreorderArt />,
+      illustration: <img src="https://cdn.builder.io/api/v1/image/assets%2Fb6f63f89f0bf46719a1ff392c832e54e%2Fe3f4d71b1fac482095a1f962410a6b5c?format=webp&width=800&height=1200" alt="Pre-order booking" className="h-full w-full object-cover" />,
     },
   ];
 
