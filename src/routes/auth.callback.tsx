@@ -14,6 +14,15 @@ export const Route = createFileRoute("/auth/callback")({
 
 function AuthCallback() {
   useEffect(() => {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const type = params.get("type");
+
+    if (type === "recovery") {
+      window.location.href = "/auth/reset-password" + window.location.hash;
+      return;
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         const { user } = data.session;

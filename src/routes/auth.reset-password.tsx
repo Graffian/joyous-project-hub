@@ -18,22 +18,43 @@ function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
 
   useEffect(() => {
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
     const accessToken = params.get("access_token");
     const refreshToken = params.get("refresh_token");
+    const type = params.get("type");
 
-    const promise = accessToken && refreshToken
-      ? supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
-      : Promise.resolve(null);
+    if (!accessToken || !refreshToken) {
+      toast.error("Invalid reset link. Please request a new password reset.");
+      setTimeout(() => {
+        window.location.href = "/auth";
+      }, 1500);
+      return;
+    }
 
-    promise.then(() =>
+    supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }).then(({ error }) => {
+      if (error) {
+        toast.error("Invalid or expired reset link. Please request a new one.");
+        setTimeout(() => {
+          window.location.href = "/auth";
+        }, 1500);
+        return;
+      }
+
       supabase.auth.getSession().then(({ data }) => {
-        if (!data.session) window.location.href = "/auth";
-      })
-    );
+        if (!data.session) {
+          toast.error("Failed to initialize reset session. Please try again.");
+          setTimeout(() => {
+            window.location.href = "/auth";
+          }, 1500);
+          return;
+        }
+        setSessionReady(true);
+      });
+    });
   }, []);
 
   async function handleReset(e: FormEvent) {
@@ -57,6 +78,17 @@ function ResetPassword() {
     }
     toast.success("Password updated successfully.");
     navigate({ to: "/" });
+  }
+
+  if (!sessionReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-6 w-6 animate-spin text-clay" />
+          <p className="mt-3 text-sm text-muted-foreground">Loading reset form...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
