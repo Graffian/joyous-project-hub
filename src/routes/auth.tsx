@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { kitchen } from "@/lib/kitchen-config";
@@ -12,6 +12,78 @@ function isSafePath(p: unknown): p is string {
 }
 
 type Screen = "landing" | "email" | "phone" | "phone-verify" | "signin" | "forgot-password";
+
+function calculatePasswordStrength(pwd: string): { score: number; label: string; color: string } {
+  let score = 0;
+  if (pwd.length >= 8) score++;
+  if (pwd.length >= 12) score++;
+  if (/[a-z]/.test(pwd)) score++;
+  if (/[A-Z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[^a-zA-Z0-9]/.test(pwd)) score++;
+
+  if (score <= 1) return { score: 0, label: "Weak", color: "bg-red-500" };
+  if (score <= 2) return { score: 33, label: "Fair", color: "bg-orange-500" };
+  if (score <= 4) return { score: 66, label: "Good", color: "bg-yellow-500" };
+  return { score: 100, label: "Strong", color: "bg-green-500" };
+}
+
+function PasswordInput({
+  value,
+  onChange,
+  placeholder,
+  autoComplete,
+  required = false,
+  showStrength = false,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder: string;
+  autoComplete: string;
+  required?: boolean;
+  showStrength?: boolean;
+}) {
+  const [showPassword, setShowPassword] = useState(false);
+  const strength = showStrength ? calculatePasswordStrength(value) : null;
+
+  return (
+    <div>
+      <div className="relative">
+        <input
+          type={showPassword ? "text" : "password"}
+          required={required}
+          minLength={6}
+          autoComplete={autoComplete}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="w-full rounded-lg border border-input bg-background px-3 py-3 pr-10 text-sm outline-none focus:border-clay"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-ink"
+        >
+          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
+      {showStrength && value && strength && (
+        <div className="mt-2">
+          <div className="mb-1 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Strength:</span>
+            <span className="text-xs font-medium text-muted-foreground">{strength.label}</span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className={`h-full transition-all ${strength.color}`}
+              style={{ width: `${strength.score}%` }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): AuthSearch => ({
@@ -270,15 +342,13 @@ function AuthPage() {
                     placeholder="Landmark / hostel (e.g. NIT Hostel 7)"
                     className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
                   />
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    autoComplete="new-password"
+                  <PasswordInput
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={setPassword}
                     placeholder="Password (min 6 chars)"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
+                    autoComplete="new-password"
+                    required
+                    showStrength
                   />
                   <button
                     type="submit"
@@ -399,14 +469,13 @@ function AuthPage() {
                     placeholder="you@example.com"
                     className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
                   />
-                  <input
-                    type="password"
-                    required
-                    autoComplete="current-password"
+                  <PasswordInput
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={setPassword}
                     placeholder="Password"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-3 text-sm outline-none focus:border-clay"
+                    autoComplete="current-password"
+                    required
+                    showStrength={false}
                   />
                   <button
                     type="button"
