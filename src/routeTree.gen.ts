@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as KitchensIndexRouteImport } from './routes/kitchens.index'
 import { Route as KitchensApplyRouteImport } from './routes/kitchens.apply'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
@@ -50,6 +51,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const KitchensIndexRoute = KitchensIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => KitchensRoute,
 } as any)
 const KitchensApplyRoute = KitchensApplyRouteImport.update({
   id: '/apply',
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/kitchens/apply': typeof KitchensApplyRoute
+  '/kitchens/': typeof KitchensIndexRoute
   '/account/complete': typeof AuthenticatedAccountCompleteRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/applications': typeof AuthenticatedAdminApplicationsRoute
@@ -139,11 +146,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRouteWithChildren
-  '/kitchens': typeof KitchensRouteWithChildren
   '/account': typeof AuthenticatedAccountRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/kitchens/apply': typeof KitchensApplyRoute
+  '/kitchens': typeof KitchensIndexRoute
   '/account/complete': typeof AuthenticatedAccountCompleteRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/applications': typeof AuthenticatedAdminApplicationsRoute
@@ -164,6 +171,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/kitchens/apply': typeof KitchensApplyRoute
+  '/kitchens/': typeof KitchensIndexRoute
   '/_authenticated/account/complete': typeof AuthenticatedAccountCompleteRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/_authenticated/admin/applications': typeof AuthenticatedAdminApplicationsRoute
@@ -184,6 +192,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/reset-password'
     | '/kitchens/apply'
+    | '/kitchens/'
     | '/account/complete'
     | '/admin/analytics'
     | '/admin/applications'
@@ -196,11 +205,11 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
-    | '/kitchens'
     | '/account'
     | '/auth/callback'
     | '/auth/reset-password'
     | '/kitchens/apply'
+    | '/kitchens'
     | '/account/complete'
     | '/admin/analytics'
     | '/admin/applications'
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/auth/reset-password'
     | '/kitchens/apply'
+    | '/kitchens/'
     | '/_authenticated/account/complete'
     | '/_authenticated/admin/analytics'
     | '/_authenticated/admin/applications'
@@ -273,6 +283,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/kitchens/': {
+      id: '/kitchens/'
+      path: '/'
+      fullPath: '/kitchens/'
+      preLoaderRoute: typeof KitchensIndexRouteImport
+      parentRoute: typeof KitchensRoute
     }
     '/kitchens/apply': {
       id: '/kitchens/apply'
@@ -420,10 +437,12 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface KitchensRouteChildren {
   KitchensApplyRoute: typeof KitchensApplyRoute
+  KitchensIndexRoute: typeof KitchensIndexRoute
 }
 
 const KitchensRouteChildren: KitchensRouteChildren = {
   KitchensApplyRoute: KitchensApplyRoute,
+  KitchensIndexRoute: KitchensIndexRoute,
 }
 
 const KitchensRouteWithChildren = KitchensRoute._addFileChildren(

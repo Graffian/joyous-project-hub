@@ -11,7 +11,7 @@ const nav = [
   { label: "Today's Menu", href: "/", hash: "menu" },
   { label: "How it Works", href: "/", hash: "how" },
   { label: "Our Cook", href: "/", hash: "cook" },
-  { label: "Kitchens", href: "/kitchens/apply" },
+  { label: "Kitchens", href: "/kitchens" },
   { label: "About", href: "/about" },
 ];
 
