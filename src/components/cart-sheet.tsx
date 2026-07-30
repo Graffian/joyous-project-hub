@@ -110,6 +110,7 @@ export function CartSheet() {
 
   function goSignIn() {
     closeCart();
+    localStorage.setItem("pendingOrder", JSON.stringify({ action: "open-cart" }));
     navigate({ to: "/auth", search: { next: currentPath || "/" } });
   }
 
@@ -168,14 +169,18 @@ export function CartSheet() {
     if (mode === "whatsapp") {
       const lines = [
         `Order ${code}`,
-        ...items.map((i) => `${i.quantity} × ${i.name} — ${kitchen.currencySymbol}${i.price * i.quantity}`),
+        ...items.map(
+          (i) => `${i.quantity} × ${i.name} — ${kitchen.currencySymbol}${i.price * i.quantity}`,
+        ),
         `Total: ${kitchen.currencySymbol}${subtotal}`,
         `Name: ${parsed.data.customer_name}`,
         `Phone: ${parsed.data.phone}`,
         `Address: ${fullAddress}`,
         `When: ${slotStamp}`,
         parsed.data.notes ? `Notes: ${parsed.data.notes}` : "",
-      ].filter(Boolean).join("\n");
+      ]
+        .filter(Boolean)
+        .join("\n");
       window.open(whatsappUrl(lines), "_blank", "noopener,noreferrer");
     } else {
       toast.success("We'll call to confirm. Pay on delivery.", { duration: 5000 });
@@ -224,7 +229,10 @@ export function CartSheet() {
             </button>
           </div>
         ) : (
-          <form onSubmit={(e) => submit("whatsapp", e)} className="flex flex-1 flex-col overflow-hidden">
+          <form
+            onSubmit={(e) => submit("whatsapp", e)}
+            className="flex flex-1 flex-col overflow-hidden"
+          >
             <div className="flex-1 overflow-y-auto">
               <ul className="divide-y divide-border px-5">
                 {items.map((i) => (
@@ -241,7 +249,8 @@ export function CartSheet() {
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium text-ink">{i.name}</p>
                           <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                            {i.meal} · {kitchen.currencySymbol}{i.price}
+                            {i.meal} · {kitchen.currencySymbol}
+                            {i.price}
                           </p>
                         </div>
                         <button
@@ -276,7 +285,8 @@ export function CartSheet() {
                           </button>
                         </div>
                         <span className="font-serif text-base text-ink">
-                          {kitchen.currencySymbol}{i.price * i.quantity}
+                          {kitchen.currencySymbol}
+                          {i.price * i.quantity}
                         </span>
                       </div>
                     </div>
@@ -385,7 +395,11 @@ export function CartSheet() {
                     />
                   </div>
                   <p className="text-[10px] text-muted-foreground">
-                    View past orders in <Link to="/account" className="underline hover:text-clay">your account</Link>.
+                    View past orders in{" "}
+                    <Link to="/account" className="underline hover:text-clay">
+                      your account
+                    </Link>
+                    .
                   </p>
                 </div>
               )}
@@ -397,7 +411,8 @@ export function CartSheet() {
                   Subtotal
                 </span>
                 <span className="font-serif text-2xl text-ink">
-                  {kitchen.currencySymbol}{subtotal}
+                  {kitchen.currencySymbol}
+                  {subtotal}
                 </span>
               </div>
               {needsSignIn ? (

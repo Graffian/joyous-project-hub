@@ -13,6 +13,7 @@ const tabs = [
   { to: "/admin/weekly", label: "Weekly" },
   { to: "/admin/orders", label: "Orders" },
   { to: "/admin/applications", label: "Cooks" },
+  { to: "/admin/analytics", label: "Analytics" },
 ] as const;
 
 function AdminLayout() {

@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { kitchen } from "@/lib/kitchen-config";
-import logoAsset from "@/assets/rasoori-logo.webp.asset.json";
-import logoAsset2x from "@/assets/rasoori-logo@2x.webp.asset.json";
+import logoUrl from "@/assets/rasoori-logo.webp";
 
 export function SiteFooter() {
   return (
@@ -10,8 +9,7 @@ export function SiteFooter() {
         <div>
           <div className="flex items-center gap-1.5">
             <img
-              src={logoAsset.url}
-              srcSet={`${logoAsset.url} 1x, ${logoAsset2x.url} 2x`}
+              src={logoUrl}
               alt={kitchen.brand.fullName}
               width={32}
               height={32}

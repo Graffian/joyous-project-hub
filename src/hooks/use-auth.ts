@@ -9,9 +9,15 @@ export function useAuth() {
 
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data, error }) => {
       if (!mounted) return;
-      setSession(data.session);
+      if (error || !data.user) {
+        await supabase.auth.signOut();
+        setSession(null);
+      } else {
+        const { data: s } = await supabase.auth.getSession();
+        setSession(s.session);
+      }
       setReady(true);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
@@ -23,7 +29,7 @@ export function useAuth() {
     };
   }, []);
 
-  return { session, user: session?.user ?? null as User | null, ready };
+  return { session, user: session?.user ?? (null as User | null), ready };
 }
 
 export function useIsAdmin(userId: string | undefined) {

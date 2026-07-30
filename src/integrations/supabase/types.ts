@@ -59,6 +59,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          image_url: string | null
           key: string
           meal: Database["public"]["Enums"]["meal_type"]
           name: string
@@ -74,6 +75,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          image_url?: string | null
           key: string
           meal: Database["public"]["Enums"]["meal_type"]
           name: string
@@ -89,6 +91,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          image_url?: string | null
           key?: string
           meal?: Database["public"]["Enums"]["meal_type"]
           name?: string

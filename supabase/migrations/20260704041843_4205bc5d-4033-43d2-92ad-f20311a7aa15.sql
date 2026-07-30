@@ -9,4 +9,12 @@ INSERT INTO public.menu_items (key, name, description, price, meal, veg, signatu
 ('ghanta-tarkari', 'Ghanta Tarkari', 'A festival-style medley of seven vegetables, chickpeas and coconut in a fragrant Odia masala.', 110, 'Dinner', true, false, 7),
 ('gupchup', 'Gupchup', 'Crisp puris, spiced potato-chickpea filling, tangy tamarind pani. Odisha''s answer to pani puri.', 60, 'Snack', true, false, 8),
 ('chhena-poda', 'Chhena Poda', 'Slow-baked cottage-cheese cake, caramelised on the outside, soft within. Odisha''s own dessert.', 70, 'Snack', true, true, 9),
-('kheeri', 'Kheeri', 'Rice pudding simmered low with milk, cardamom, cashew and raisins. Ends the meal like a lullaby.', 65, 'Dinner', true, false, 10);
+('kheeri', 'Kheeri', 'Rice pudding simmered low with milk, cardamom, cashew and raisins. Ends the meal like a lullaby.', 65, 'Dinner', true, false, 10)
+ON CONFLICT (key) DO UPDATE SET
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  price = EXCLUDED.price,
+  meal = EXCLUDED.meal,
+  veg = EXCLUDED.veg,
+  signature = EXCLUDED.signature,
+  sort_order = EXCLUDED.sort_order;

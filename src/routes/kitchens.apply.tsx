@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, Check, Loader2, LogIn } from "lucide-react";
 import { z } from "zod";
@@ -11,6 +11,7 @@ import { fetchProfile, upsertProfile } from "@/lib/profile";
 import { kitchen } from "@/lib/kitchen-config";
 
 export const Route = createFileRoute("/kitchens/apply")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: `Cook with ${kitchen.brand.fullName} — Apply as a home kitchen` },
@@ -39,7 +40,6 @@ const applicationSchema = z.object({
 function ApplyPage() {
   const { user, ready } = useAuth();
   const navigate = useNavigate();
-  const currentPath = useRouterState({ select: (s) => s.location.pathname + s.location.search });
 
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -71,7 +71,7 @@ function ApplyPage() {
   }, [user]);
 
   function goSignIn() {
-    navigate({ to: "/auth", search: { next: currentPath || "/kitchens/apply" } });
+    navigate({ to: "/auth", search: { next: window.location.pathname + window.location.search || "/kitchens/apply" } });
   }
 
   async function onSubmit(e: FormEvent) {
