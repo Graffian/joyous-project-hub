@@ -15,7 +15,7 @@ export const menuQueryOptions = queryOptions({
     if (error) {
       const { data: d2, error: e2 } = await supabase
         .from("menu_items")
-        .select("id,key,name,description,price,meal,veg,signature,sold_out,sort_order")
+        .select("id,key,name,description,price,meal,veg,signature,sold_out,sort_order,image_url")
         .eq("active", true)
         .order("sort_order", { ascending: true });
       if (e2) throw e2;
@@ -29,7 +29,7 @@ export const menuQueryOptions = queryOptions({
         veg: r.veg,
         signature: r.signature,
         soldOut: r.sold_out,
-        image: imageForKey(r.key),
+        image: imageForKey(r.key, r.image_url),
       }));
     }
     return (data ?? []).map((r) => ({

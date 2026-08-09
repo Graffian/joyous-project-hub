@@ -320,10 +320,7 @@ function AdminMenu() {
                               alt={row.name}
                               className="h-full w-full object-cover"
                               onError={(e) => {
-                                const t = e.currentTarget;
-                                if (t.src !== "") {
-                                  t.style.display = "none";
-                                }
+                                e.currentTarget.alt = "Image unavailable";
                               }}
                             />
                           </div>
