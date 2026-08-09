@@ -3,25 +3,41 @@ import { useQuery } from "@tanstack/react-query";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+let sessionPromise: Promise<Session | null> | null = null;
+
+async function loadSession(): Promise<Session | null> {
+  if (!sessionPromise) {
+    sessionPromise = supabase.auth
+      .getUser()
+      .then(async ({ data, error }) => {
+        if (error || !data.user) {
+          await supabase.auth.signOut();
+          return null;
+        }
+        const { data: s } = await supabase.auth.getSession();
+        return s.session;
+      })
+      .finally(() => {
+        sessionPromise = null;
+      });
+  }
+  return sessionPromise;
+}
+
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getUser().then(async ({ data, error }) => {
+    loadSession().then((s) => {
       if (!mounted) return;
-      if (error || !data.user) {
-        await supabase.auth.signOut();
-        setSession(null);
-      } else {
-        const { data: s } = await supabase.auth.getSession();
-        setSession(s.session);
-      }
+      setSession(s);
       setReady(true);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
       setSession(s);
+      setReady(true);
     });
     return () => {
       mounted = false;
