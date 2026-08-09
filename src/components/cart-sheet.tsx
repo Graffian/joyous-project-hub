@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Loader2, LogIn, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import {
+  Banknote,
+  ChevronRight,
+  CreditCard,
+  Loader2,
+  LogIn,
+  Minus,
+  Plus,
+  ShieldCheck,
+  ShoppingBag,
+  Trash2,
+  X,
+} from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
@@ -66,8 +78,11 @@ export function CartSheet() {
   const currentPath = useRouterState({ select: (s) => s.location.href });
 
   const [form, setForm] = useState(EMPTY_FORM);
+  const [paymentMethod, setPaymentMethod] = useState<"upi" | "cod">("upi");
   const [submitting, setSubmitting] = useState<null | "whatsapp" | "checkout">(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const deliveryFee = subtotal >= 300 ? 0 : 25;
+  const total = subtotal + deliveryFee;
 
   useEffect(() => {
     if (isOpen) {
@@ -182,8 +197,12 @@ export function CartSheet() {
         .filter(Boolean)
         .join("\n");
       window.open(whatsappUrl(lines), "_blank", "noopener,noreferrer");
+    } else if (paymentMethod === "cod") {
+      toast.success("Order placed. You can pay on delivery.", { duration: 5000 });
     } else {
-      toast.success("We'll call to confirm. Pay on delivery.", { duration: 5000 });
+      toast.success("Order saved. Razorpay payment will be enabled after its secure checkout is configured.", {
+        duration: 5000,
+      });
     }
     clear();
     setForm(EMPTY_FORM);
@@ -406,51 +425,50 @@ export function CartSheet() {
             </div>
 
             <footer className="border-t border-border bg-background px-5 py-4">
-              <div className="mb-3 flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
-                  Subtotal
-                </span>
-                <span className="font-serif text-2xl text-ink">
-                  {kitchen.currencySymbol}
-                  {subtotal}
-                </span>
-              </div>
-              {needsSignIn ? (
-                <button
-                  type="button"
-                  onClick={goSignIn}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-cream transition-all hover:-translate-y-0.5 hover:bg-clay"
-                >
-                  <LogIn className="h-3.5 w-3.5" />
-                  Sign in to checkout
-                </button>
-              ) : (
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <button
-                    type="submit"
-                    disabled={!!submitting}
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-white transition-all hover:-translate-y-0.5 hover:brightness-95 disabled:opacity-60"
-                  >
-                    {submitting === "whatsapp" ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <WhatsAppIcon className="h-3.5 w-3.5" />
-                    )}
-                    Order on WhatsApp
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => submit("checkout", e)}
-                    disabled={!!submitting}
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-cream transition-all hover:-translate-y-0.5 hover:bg-clay disabled:opacity-60"
-                  >
-                    {submitting === "checkout" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                    Place order · Pay on delivery
-                  </button>
+              {!needsSignIn && (
+                <div className="mb-4 rounded-xl border border-border bg-cream/40 p-3.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">Bill summary</span>
+                    <span className="text-[10px] text-leaf">{deliveryFee === 0 ? "Free delivery" : `${kitchen.currencySymbol}${deliveryFee} delivery`}</span>
+                  </div>
+                  <div className="mt-3 space-y-1.5 text-xs text-muted-foreground">
+                    <div className="flex items-center justify-between"><span>Item total</span><span>{kitchen.currencySymbol}{subtotal}</span></div>
+                    <div className="flex items-center justify-between"><span>Delivery fee</span><span>{deliveryFee === 0 ? "Free" : `${kitchen.currencySymbol}${deliveryFee}`}</span></div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+                    <span className="font-serif text-lg text-ink">To pay</span>
+                    <span className="font-serif text-2xl text-clay">{kitchen.currencySymbol}{total}</span>
+                  </div>
                 </div>
               )}
-              <p className="mt-2 text-center text-[10px] text-muted-foreground">
-                We'll call to confirm. COD or UPI on delivery.
+              {needsSignIn ? (
+                <button type="button" onClick={goSignIn} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-clay px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.22em] text-cream transition-all hover:bg-ink">
+                  <LogIn className="h-3.5 w-3.5" /> Sign in to checkout
+                </button>
+              ) : (
+                <>
+                  <div className="mb-3 grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => setPaymentMethod("upi")} className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors ${paymentMethod === "upi" ? "border-clay bg-clay/10 text-ink" : "border-border bg-background text-muted-foreground hover:border-ink/25"}`}>
+                      <CreditCard className="h-4 w-4 shrink-0 text-clay" />
+                      <span><span className="block text-xs font-medium">UPI / Cards</span><span className="text-[9px]">Razorpay</span></span>
+                    </button>
+                    <button type="button" onClick={() => setPaymentMethod("cod")} className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors ${paymentMethod === "cod" ? "border-clay bg-clay/10 text-ink" : "border-border bg-background text-muted-foreground hover:border-ink/25"}`}>
+                      <Banknote className="h-4 w-4 shrink-0 text-leaf" />
+                      <span><span className="block text-xs font-medium">Pay on delivery</span><span className="text-[9px]">Cash or UPI</span></span>
+                    </button>
+                  </div>
+                  <button type="button" onClick={(e) => submit("checkout", e)} disabled={!!submitting} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-clay px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.22em] text-cream transition-all hover:bg-ink disabled:opacity-60">
+                    {submitting === "checkout" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
+                    {paymentMethod === "upi" ? `Pay ${kitchen.currencySymbol}${total} securely` : `Place order · ${kitchen.currencySymbol}${total}`}
+                  </button>
+                  <button type="submit" disabled={!!submitting} className="mt-2 inline-flex w-full items-center justify-center gap-2 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-clay disabled:opacity-60">
+                    {submitting === "whatsapp" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <WhatsAppIcon className="h-3.5 w-3.5" />}
+                    Need help? Order on WhatsApp
+                  </button>
+                </>
+              )}
+              <p className="mt-2 flex items-center justify-center gap-1 text-center text-[10px] text-muted-foreground">
+                <ShieldCheck className="h-3 w-3 text-leaf" /> Secure checkout · Delivery from {kitchen.currencySymbol}25
               </p>
             </footer>
           </form>
