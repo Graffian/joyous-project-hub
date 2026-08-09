@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, Clock, MapPin, Plus, Search, Sparkles, X } from "lucide-react";
+import { ArrowUpRight, Clock, MapPin, Plus, Search, ShoppingBag, Sparkles, X } from "lucide-react";
 import cookPortrait from "@/assets/cook-illustration.jpg";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -64,6 +64,7 @@ function Home() {
       <SiteHeader />
       <MenuTopBar />
       <Menu />
+      <MobileCartBar />
       <MealPlansSection />
       <CookNote />
       <HowItWorks />
@@ -343,6 +344,27 @@ function Menu() {
   );
 }
 
+function MobileCartBar() {
+  const { count, subtotal, openCart } = useCart();
+  if (count === 0) return null;
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-30 px-4 pb-4 md:hidden">
+      <button
+        type="button"
+        onClick={openCart}
+        className="flex w-full items-center justify-between rounded-xl bg-clay px-4 py-3.5 text-cream shadow-[0_12px_35px_-12px_rgba(80,40,20,0.65)] transition-transform active:scale-[0.98]"
+      >
+        <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em]">
+          <ShoppingBag className="h-4 w-4" />
+          View cart · {count} {count === 1 ? "item" : "items"}
+        </span>
+        <span className="font-serif text-lg">{kitchen.currencySymbol}{subtotal} <ArrowUpRight className="ml-1 inline h-4 w-4" /></span>
+      </button>
+    </div>
+  );
+}
+
 function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex min-w-0 items-center gap-2 overflow-x-auto sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -475,13 +497,13 @@ function MenuCard({
               <button
                 type="button"
                 onClick={onOrder}
-                className="group/btn inline-flex items-center gap-1.5 border-b border-ink pb-0.5 text-[10px] font-bold uppercase tracking-[0.22em] text-ink transition-colors hover:border-clay hover:text-clay"
+                className="group/btn inline-flex items-center gap-1.5 rounded-full bg-clay px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-cream transition-colors hover:bg-ink"
               >
                 <Plus className="h-3 w-3" />
-                Add to order
+                Add to cart
                 <ArrowUpRight className="h-3 w-3 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
               </button>
-              <span className="text-[9px] text-muted-foreground/40">|</span>
+              <span className="text-[9px] text-muted-foreground/40">or</span>
               <button
                 type="button"
                 onClick={onOrderNow}
