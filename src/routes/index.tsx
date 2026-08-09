@@ -18,9 +18,11 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => {
-    void context.queryClient.prefetchQuery(menuQueryOptions);
-    void context.queryClient.prefetchQuery(weeklyMenuQueryOptions);
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(menuQueryOptions),
+      context.queryClient.ensureQueryData(weeklyMenuQueryOptions),
+    ]);
   },
   component: Home,
 });
